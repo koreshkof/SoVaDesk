@@ -4,7 +4,7 @@
 # The BetterDesk server is a single binary that replaces both hbbs and hbbr.
 # It provides: signal (UDP/TCP/WS), relay (TCP/WS), HTTP API, admin console.
 #
-# Build: docker build -f Dockerfile.server -t betterdesk-server:local .
+# Build: docker build -f Dockerfile.server -t sova-server:local .
 
 # ---- Build stage ----
 FROM golang:1.26-alpine AS builder
@@ -14,12 +14,12 @@ RUN apk add --no-cache git || { sleep 2 && apk add --no-cache git; }
 WORKDIR /src
 
 # Copy Go module files first (cache dependencies)
-COPY betterdesk-server/go.mod betterdesk-server/go.sum ./
+COPY sova-server/go.mod sova-server/go.sum ./
 
 RUN go mod download
 
 # Copy full source
-COPY betterdesk-server/ .
+COPY sova-server/ .
 
 ARG BETTERDESK_PRODUCT_VERSION=dev
 
@@ -27,7 +27,7 @@ ARG BETTERDESK_PRODUCT_VERSION=dev
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X main.Version=${BETTERDESK_PRODUCT_VERSION}" \
     -tags "netgo osusergo" \
-    -o /betterdesk-server .
+    -o /sova-server .
 
 # ---- Runtime stage ----
 FROM alpine:3.22
@@ -44,14 +44,14 @@ RUN apk add --no-cache \
     su-exec \
     || { sleep 2 && apk add --no-cache \
     ca-certificates curl sqlite tini su-exec; } \
-    && addgroup -g 10001 -S betterdesk \
-    && adduser -u 10001 -S -G betterdesk betterdesk
+    && addgroup -g 10001 -S sova \
+    && adduser -u 10001 -S -G sova sova
 
-COPY --from=builder /betterdesk-server /usr/local/bin/betterdesk-server
-RUN chmod +x /usr/local/bin/betterdesk-server
+COPY --from=builder /sova-server /usr/local/bin/sova-server
+RUN chmod +x /usr/local/bin/sova-server
 
 # Create data directory before writing build metadata into it
-RUN mkdir -p /opt/rustdesk && chown betterdesk:betterdesk /opt/rustdesk
+RUN mkdir -p /opt/rustdesk && chown sova:sova /opt/rustdesk
 
 ARG BETTERDESK_COMMIT_SHA=unknown
 ARG BETTERDESK_IMAGE_VERSION=unknown
@@ -59,10 +59,10 @@ ENV BETTERDESK_IMAGE_SHA=${BETTERDESK_COMMIT_SHA}
 ENV BETTERDESK_IMAGE_VERSION=${BETTERDESK_IMAGE_VERSION}
 RUN printf '%s\n' "${BETTERDESK_COMMIT_SHA}" > /opt/rustdesk/.image-commit
 
-# Entrypoint script: fixes volume permissions, then drops to betterdesk user
+# Entrypoint script: fixes volume permissions, then drops to sova user
 COPY docker/server-entrypoint.sh /server-entrypoint.sh
-COPY docker/show-admin-credentials.sh /usr/local/bin/betterdesk-show-admin-credentials
-RUN chmod +x /server-entrypoint.sh /usr/local/bin/betterdesk-show-admin-credentials
+COPY docker/show-admin-credentials.sh /usr/local/bin/sova-show-admin-credentials
+RUN chmod +x /server-entrypoint.sh /usr/local/bin/sova-show-admin-credentials
 
 WORKDIR /opt/rustdesk
 
@@ -80,7 +80,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD curl -sf http://localhost:21121/api/health || exit 1
 
 # Note: Container starts as root so entrypoint can fix volume permissions.
-# server-entrypoint.sh drops to betterdesk user via su-exec before running the server.
+# server-entrypoint.sh drops to sova user via su-exec before running the server.
 
 ENTRYPOINT ["/sbin/tini", "--", "/server-entrypoint.sh"]
-CMD ["/usr/local/bin/betterdesk-server", "-mode", "all", "-key-file", "/opt/rustdesk/id_ed25519"]
+CMD ["/usr/local/bin/sova-server", "-mode", "all", "-key-file", "/opt/rustdesk/id_ed25519"]

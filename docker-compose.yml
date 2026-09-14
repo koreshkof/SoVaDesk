@@ -20,11 +20,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
-    image: betterdesk-server:local
+    image: sova-server:local
     pull_policy: never
-    container_name: betterdesk-server
-    hostname: betterdesk-server
-    command: ["/usr/local/bin/betterdesk-server", "-mode", "all", "-api-port", "21114", "-key-file", "/opt/rustdesk/id_ed25519"]
+    container_name: sova-server
+    hostname: sova-server
+    command: ["/usr/local/bin/sova-server", "-mode", "all", "-api-port", "21114", "-key-file", "/opt/rustdesk/id_ed25519"]
     ports:
       - "21114:21114"           # Go HTTP API (default — direct client + REST)
       - "21115:21115"           # NAT type test
@@ -54,7 +54,7 @@ services:
       - BILLING_REQUIRE_SYNCED_CLOCK=${BILLING_REQUIRE_SYNCED_CLOCK:-1}
       - BILLING_TRUST_OS_NTP=${BILLING_TRUST_OS_NTP:-Y}
     networks:
-      - betterdesk-net
+      - sova-net
     restart: unless-stopped
     # SECURITY (audit fix L-02, 2026-04-10): drop all capabilities except
     # those needed by the entrypoint to chown volumes + su-exec to non-root.
@@ -79,10 +79,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.console
-    image: betterdesk-console:local
+    image: sova-console:local
     pull_policy: never
-    container_name: betterdesk-console
-    hostname: betterdesk-console
+    container_name: sova-console
+    hostname: sova-console
     ports:
       - "5000:5000"             # Web console (admin panel)
       - "21121:21121"           # Backward compat proxy → Go :21114
@@ -98,25 +98,25 @@ services:
       - API_PORT=21121
       - RUSTDESK_API_PROXY=true
       - GO_API_PORT=21114
-      - SERVER_BACKEND=betterdesk
-      - HBBS_API_URL=http://betterdesk-server:21114/api
-      - BETTERDESK_API_URL=http://betterdesk-server:21114/api
+      - SERVER_BACKEND=sova
+      - HBBS_API_URL=http://sova-server:21114/api
+      - BETTERDESK_API_URL=http://sova-server:21114/api
       - RUSTDESK_PATH=/opt/rustdesk
       - DATA_DIR=/app/data
       - DB_PATH=/opt/rustdesk/db_v2.sqlite3
       - PUB_KEY_PATH=/opt/rustdesk/id_ed25519.pub
       - API_KEY_PATH=/opt/rustdesk/.api_key
       - SESSION_SECRET=${SESSION_SECRET:-}
-      - WS_HBBS_HOST=betterdesk-server
+      - WS_HBBS_HOST=sova-server
       - WS_HBBS_PORT=21116
-      - WS_HBBR_HOST=betterdesk-server
+      - WS_HBBR_HOST=sova-server
       - WS_HBBR_PORT=21117
       - DOCKER=true
       # Optional: Set custom admin credentials for first run
       # - ADMIN_USERNAME=admin
       # - ADMIN_PASSWORD=YourSecurePassword123
     networks:
-      - betterdesk-net
+      - sova-net
     restart: unless-stopped
     # SECURITY (audit fix L-02, 2026-04-10): drop all caps except those
     # needed by su-exec (SETUID/SETGID) and volume permission fixes (CHOWN/FOWNER).
@@ -142,7 +142,7 @@ services:
   # Nginx Reverse Proxy (Optional — only with --profile nginx)
   nginx:
     image: nginx:alpine
-    container_name: betterdesk-nginx
+    container_name: sova-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -150,7 +150,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     networks:
-      - betterdesk-net
+      - sova-net
     restart: unless-stopped
     depends_on:
       - console
@@ -169,7 +169,7 @@ volumes:
     driver: local
 
 networks:
-  betterdesk-net:
+  sova-net:
     driver: bridge
     ipam:
       config:

@@ -8,12 +8,12 @@
 #
 # With PostgreSQL:
 #   PG_PASSWORD=YourStrongPasswordHere \
-#   DB_TYPE=postgres DATABASE_URL=postgres://betterdesk:YourStrongPasswordHere@postgres:5432/betterdesk \
+#   DB_TYPE=postgres DATABASE_URL=postgres://sova:YourStrongPasswordHere@postgres:5432/sova \
 #     docker compose -f docker-compose.single.yml --profile postgres up -d --build
 #
 #   Or create a .env file:
 #     DB_TYPE=postgres
-#     DATABASE_URL=postgres://betterdesk:YourStrongPasswordHere@postgres:5432/betterdesk
+#     DATABASE_URL=postgres://sova:YourStrongPasswordHere@postgres:5432/sova
 #     PG_PASSWORD=YourStrongPasswordHere
 #   Then: docker compose -f docker-compose.single.yml --profile postgres up -d --build
 #
@@ -22,15 +22,15 @@
 #   Admin password: auto-generated unless ADMIN_PASSWORD is set before first start
 
 services:
-  # BetterDesk All-in-One (Go server + Node.js console)
-  betterdesk:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: betterdesk:local
+  # SoVa Desk All-in-One (Go server + Node.js console)
+  sova-desk:
+    # build:
+      # context: .
+      # dockerfile: Dockerfile
+    image: sova-desk:3.5.94
     pull_policy: never
-    container_name: betterdesk
-    hostname: betterdesk
+    container_name: sova-desk
+    hostname: sova-desk
     ports:
       - "5000:5000"             # Web Console (LAN)
       - "21115:21115"           # NAT type test
@@ -41,7 +41,7 @@ services:
       - "21119:21119"           # WebSocket Relay
       - "21121:21121"           # HTTP API (RustDesk client + REST, WAN-facing)
     volumes:
-      - betterdesk-data:/opt/rustdesk
+      - sova-data:/opt/rustdesk
       - console-data:/app/data
     environment:
       - NODE_ENV=production
@@ -50,7 +50,7 @@ services:
       - API_HOST=0.0.0.0
       - API_ENABLED=false
       - ENCRYPTED_ONLY=1
-      - SERVER_BACKEND=betterdesk
+      - SERVER_BACKEND=sova
       - HBBS_API_URL=http://127.0.0.1:21121/api
       - BETTERDESK_API_URL=http://127.0.0.1:21121/api
       - RUSTDESK_PATH=/opt/rustdesk
@@ -108,12 +108,12 @@ services:
   # PostgreSQL (optional — use with --profile postgres)
   postgres:
     image: postgres:16-alpine
-    container_name: betterdesk-postgres
+    container_name: sova-postgres
     environment:
-      - POSTGRES_USER=betterdesk
+      - POSTGRES_USER=sova
       # BD-2026-007: PG_PASSWORD MUST be set explicitly — do not use default values in production
-      - POSTGRES_PASSWORD=${PG_PASSWORD:?PG_PASSWORD must be set for PostgreSQL}
-      - POSTGRES_DB=betterdesk
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-dummy}
+      - POSTGRES_DB=sova
     volumes:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -128,7 +128,7 @@ services:
       - CHOWN
       - FOWNER
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U betterdesk"]
+      test: ["CMD-SHELL", "pg_isready -U sova"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -138,7 +138,7 @@ services:
   # Nginx Reverse Proxy (optional — use with --profile nginx)
   nginx:
     image: nginx:alpine
-    container_name: betterdesk-nginx
+    container_name: sova-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -147,15 +147,15 @@ services:
       - ./ssl:/etc/nginx/ssl:ro
     restart: unless-stopped
     depends_on:
-      - betterdesk
+      - sova-desk
     profiles:
       - nginx
 
 volumes:
-  betterdesk-data:
+  sova-data:
   console-data:
   postgres-data:
 
 networks:
   default:
-    name: betterdesk-net
+    name: sova-net

@@ -1,8 +1,8 @@
-# 🚀 BetterDesk v3 — Ultimate Remote Desktop & CDAP Solution
+# 🚀 SoVa Desk v3 — Ultimate Remote Desktop & CDAP Solution
 
 <div align="center">
 
-<img src="betterdesk.png" alt="BetterDesk Logo" width="320">
+<img src="sova.png" alt="SoVa Desk Logo" width="320">
 
 <br><br>
 
@@ -15,22 +15,11 @@
 ![CDAP](https://img.shields.io/badge/CDAP-v1.0-orange.svg)
 ![i18n](https://img.shields.io/badge/i18n-25%2B%20languages-purple.svg)
 
-[![Sponsor on GitHub](https://img.shields.io/badge/GitHub-Sponsor-181717?logo=github&logoColor=white&style=flat)](https://github.com/sponsors/UNITRONIX)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%23FFDD00?logo=buy-me-a-coffee&logoColor=black&style=flat)](https://buymeacoffee.com/unitronix)
-
 **A clean-room RustDesk-compatible server written in Go — single binary replacing hbbs + hbbr — with full protocol support, TLS everywhere, PostgreSQL backend, CDAP (Custom Device API Protocol) for IoT/SCADA/network devices, and a modern Node.js web management console.**
 
 [Architecture](#-architecture) • [Installation](#-installation) • [Configuration](#-configuration) • [Security](#-security-architecture) • [API](#-api-reference) • [Troubleshooting](#-troubleshooting)
 
 <br>
-
-### 🏆 Honorary Supporter
-
-<a href="https://insolve.pl">
-  <img src="docs/assets/insolve-logo.png" alt="INSOLVE — Honorary Supporter" width="200">
-</a>
-
-BetterDesk is proudly supported by **[INSOLVE](https://insolve.pl)** — recognized as an *Honorary Supporter* of the project. See [SPONSORS.md](SPONSORS.md) for the full list of supporters and how to become one.
 
 </div>
 
@@ -38,7 +27,7 @@ BetterDesk is proudly supported by **[INSOLVE](https://insolve.pl)** — recogni
 
 ## ✅ End-to-End Encryption — Fully Working
 
-> **E2E encryption between RustDesk clients is fully functional.** Both P2P (punch-hole) and relay sessions establish NaCl-encrypted channels with proper `SignedId` + `PublicKey` handshake. The green lock indicator appears in the RustDesk client for all connection modes.
+> **E2E encryption between SoVa clients is fully functional.** Both P2P (punch-hole) and relay sessions establish NaCl-encrypted channels with proper `SignedId` + `PublicKey` handshake. The green lock indicator appears in the SoVa client for all connection modes.
 >
 > Additionally, you can enable **TLS on relay ports** (`--tls-relay` / `TLS_RELAY=Y`) for an extra transport-level encryption layer on top of the E2E channel.
 
@@ -48,7 +37,7 @@ BetterDesk is proudly supported by **[INSOLVE](https://insolve.pl)** — recogni
 
 - [Overview](#-overview)
 - [Architecture](#-architecture)
-- [BetterDesk Go Server](#-betterdesk-go-server)
+- [SoVa Desk Go Server](#-sova-go-server)
   - [Protocol Implementation](#protocol-implementation)
   - [Cryptography](#cryptography)
   - [Database Backends](#database-backends)
@@ -61,7 +50,7 @@ BetterDesk is proudly supported by **[INSOLVE](https://insolve.pl)** — recogni
   - [Linux](#linux)
   - [Windows](#windows)
   - [Docker](#docker)
-- [RustDesk Client Configuration](#-rustdesk-client-configuration)
+- [SoVa Client Configuration](#-sova-client-configuration)
   - [Desktop Client Login](#desktop-client-login)
   - [Enabling Pro Features](#enabling-pro-features)
 - [TLS / SSL Certificates](#-tls--ssl-certificates)
@@ -81,15 +70,15 @@ BetterDesk is proudly supported by **[INSOLVE](https://insolve.pl)** — recogni
 
 ## 🌟 Overview
 
-**BetterDesk** is a complete RustDesk infrastructure solution consisting of two main components:
+**SoVa Desk** is a complete RustDesk infrastructure solution consisting of two main components:
 
-1. **BetterDesk Server** — A clean-room Go implementation that replaces both `hbbs` (signal) and `hbbr` (relay) with a **single binary**. It implements the full RustDesk wire protocol, including UDP/TCP/WebSocket signal, TCP/WebSocket relay, NaCl secure handshake, and a comprehensive HTTP REST API.
+1. **SoVa Server** — A clean-room Go implementation that replaces both `hbbs` (signal) and `hbbr` (relay) with a **single binary**. It implements the full RustDesk wire protocol, including UDP/TCP/WebSocket signal, TCP/WebSocket relay, NaCl secure handshake, and a comprehensive HTTP REST API.
 
-2. **BetterDesk Console** — A Node.js (Express.js) web management panel with device monitoring, TOTP 2FA, RBAC, address book sync, and RustDesk Client API.
+2. **SoVa Desk Console** — A Node.js (Express.js) web management panel with device monitoring, TOTP 2FA, RBAC, address book sync, and SoVa Client API.
 
-### Why BetterDesk?
+### Why SoVa Desk?
 
-| Feature | Original RustDesk Server | BetterDesk Server |
+| Feature | Original RustDesk Server | SoVa Server |
 |---------|------------------------|-------------------|
 | **Binaries** | 2 (hbbs + hbbr) | **1 single binary** |
 | **Language** | Rust | Go (pure Go, no CGO) |
@@ -161,21 +150,21 @@ Database Layer
 
 ---
 
-## 🔧 BetterDesk Go Server
+## 🔧 SoVa Desk Go Server
 
-The Go server (`betterdesk-server/`) is a ~20,000 LOC clean-room implementation of the RustDesk signal and relay protocol. It compiles to a **single static binary** with no external dependencies (pure Go, no CGO required).
+The Go server (`sova-server/`) is a ~20,000 LOC clean-room implementation of the RustDesk signal and relay protocol. It compiles to a **single static binary** with no external dependencies (pure Go, no CGO required).
 
 ### Server Modes
 
 ```bash
 # Default: run everything (signal + relay + API + admin)
-./betterdesk-server -mode all
+./sova-server -mode all
 
 # Signal only (no relay)
-./betterdesk-server -mode signal
+./sova-server -mode signal
 
 # Relay only
-./betterdesk-server -mode relay
+./sova-server -mode relay
 ```
 
 ### Protocol Implementation
@@ -210,7 +199,7 @@ The relay is a **pure opaque byte pipe**:
 3. Bidirectional `io.Copy` begins immediately (relay is a pure opaque byte pipe)
 4. Timeouts: 30s pairing, 30s idle (extended on activity via `idleTimeoutConn`)
 
-The relay does **not** parse, inspect, or modify traffic between paired clients. E2E encryption is entirely between the two RustDesk clients.
+The relay does **not** parse, inspect, or modify traffic between paired clients. E2E encryption is entirely between the two SoVa clients.
 
 #### Wire Protocol (codec/)
 
@@ -247,7 +236,7 @@ Server                                          Client
 
 - **Private key**: `id_ed25519` file (auto-generated if missing)
 - **Public key**: `id_ed25519.pub` (base64-encoded, same format as original RustDesk)
-- **Key format**: Standard Ed25519 (32-byte seed), compatible with existing RustDesk clients
+- **Key format**: Standard Ed25519 (32-byte seed), compatible with existing SoVa clients
 
 #### Password Hashing
 
@@ -261,7 +250,7 @@ Server                                          Client
 #### SQLite (Default)
 
 ```bash
-./betterdesk-server -db ./db_v2.sqlite3
+./sova-server -db ./db_v2.sqlite3
 ```
 
 - **Driver**: `modernc.org/sqlite` — pure Go, no CGO required
@@ -274,7 +263,7 @@ Server                                          Client
 #### PostgreSQL
 
 ```bash
-./betterdesk-server -db "postgres://user:password@localhost:5432/betterdesk?sslmode=disable"
+./sova-server -db "postgres://user:password@localhost:5432/sova?sslmode=disable"
 ```
 
 - **Driver**: `pgx/v5` with `pgxpool` connection pooling
@@ -299,20 +288,20 @@ device_tokens      -- Enrollment tokens (Dual Key System)
 
 ### TLS Support
 
-BetterDesk supports TLS on all transport layers with a unique **dual-mode auto-detection** system:
+SoVa Desk supports TLS on all transport layers with a unique **dual-mode auto-detection** system:
 
 ```bash
 # Enable TLS on signal ports (21116 TCP + 21115 + 21118 WSS)
-./betterdesk-server -tls-signal -tls-cert server.crt -tls-key server.key
+./sova-server -tls-signal -tls-cert server.crt -tls-key server.key
 
 # Enable TLS on relay ports (21117 TCP + 21119 WSS)
-./betterdesk-server -tls-relay -tls-cert server.crt -tls-key server.key
+./sova-server -tls-relay -tls-cert server.crt -tls-key server.key
 
 # Enable TLS on everything
-./betterdesk-server -tls-signal -tls-relay -tls-cert server.crt -tls-key server.key
+./sova-server -tls-signal -tls-relay -tls-cert server.crt -tls-key server.key
 
 # HTTPS on API
-./betterdesk-server -tls-cert server.crt -tls-key server.key -force-https
+./sova-server -tls-cert server.crt -tls-key server.key -force-https
 ```
 
 #### DualModeListener (config/tls.go)
@@ -323,7 +312,7 @@ Accepts **both plain and TLS connections on the same port**:
 2. If `0x16` (TLS ClientHello) → upgrades to `tls.Server()`
 3. Otherwise → passes through as plain TCP via `peekedConn`
 
-This means existing RustDesk clients (no TLS) continue to work alongside TLS-enabled clients without port changes. Minimum TLS version: **TLS 1.2**.
+This means existing SoVa clients (no TLS) continue to work alongside TLS-enabled clients without port changes. Minimum TLS version: **TLS 1.2**.
 
 ### Rate Limiting & DDoS Protection
 
@@ -350,7 +339,7 @@ The **Dual Key System** controls which devices can register with the server:
 
 ```bash
 # Set enrollment mode
-./betterdesk-server -mode all
+./sova-server -mode all
 # Then via API: PUT /api/enrollment/mode {"mode": "managed"}
 ```
 
@@ -374,7 +363,7 @@ OFFLINE   → Beyond RegTimeout (30s) with no heartbeat
 A lightweight management interface accessible via `telnet` or `netcat`:
 
 ```bash
-./betterdesk-server -admin-port 9090 -admin-password "secret"
+./sova-server -admin-port 9090 -admin-password "secret"
 # Then: telnet 127.0.0.1 9090
 ```
 
@@ -396,8 +385,8 @@ The web console (`web-nodejs/`) is an Express.js application providing a full-fe
 - **TOTP 2FA** — Two-factor authentication with `otplib`
 - **RBAC** — Admin, Operator, Viewer, and Pro (API-only) roles with permission enforcement
 - **Address book sync** — Full AB storage with `address_books` table
-- **RustDesk Client API** — Go on :21114 (default WAN), :21121 backward-compat proxy with 7-layer security
-- **Desktop connect** — One-click connect via `rustdesk://` URI handler
+- **SoVa Client API** — Go on :21114 (default WAN), :21121 backward-compat proxy with 7-layer security
+- **Desktop connect** — One-click connect via `sova://` URI handler
 - **i18n** — JSON-based translations, 25+ languages (auto-discovery from `lang/` directory)
 - **Desktop widget dashboard** — Drag-and-drop dashboard mode with 20+ widget types (weather, calendar, system monitor, disk usage, log viewer, alert feed, speed test, Docker containers, world clock, bookmarks, device map, and more), Windows 11-style snap layouts with edge snapping, draggable zone borders, Aero Shake, widget groups/stacking, glassmorphism theme, presets/templates
 - **Fleet management** — Device groups, tags, batch operations, scaling policies
@@ -417,9 +406,9 @@ The web console (`web-nodejs/`) is an Express.js application providing a full-fe
 - **CSRF protection** — Double-submit cookie pattern with `csrf-csrf`
 - **WebSocket** — Real-time status updates from Go server event bus
 
-### RustDesk Client API (Go :21114, compat :21121)
+### SoVa Client API (Go :21114, compat :21121)
 
-**Handlers** run in **betterdesk-server** on **21114** (default API port). **`http://<server>:21114`** for new configs; **`http://<server>:21121`** still works via Node proxy for existing deployments. Allows RustDesk desktop clients to:
+**Handlers** run in **sova-server** on **21114** (default API port). **`http://<server>:21114`** for new configs; **`http://<server>:21121`** still works via Node proxy for existing deployments. Allows SoVa desktop clients to:
 - Login/logout with username and password
 - Sync address books across devices
 - Send heartbeats and system information
@@ -512,37 +501,37 @@ The web console (`web-nodejs/`) is an Express.js application providing a full-fe
 
 ```bash
 # Docker (official all-in-one image, auto-configured)
-curl -fsSL https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/koreshkof/SoVaDesk/main/install.sh | sudo bash
 
-# Native (git clone + betterdesk.sh --auto)
-curl -fsSL https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/install.sh | sudo bash -s -- --native
+# Native (git clone + sova.sh --auto)
+curl -fsSL https://raw.githubusercontent.com/koreshkof/SoVaDesk/main/install.sh | sudo bash -s -- --native
 ```
 
 **Manual install:**
 
 ```bash
-git clone https://github.com/UNITRONIX/Rustdesk-FreeConsole.git
+git clone https://github.com/koreshkof/SoVaDesk.git
 cd Rustdesk-FreeConsole
-chmod +x betterdesk.sh
+chmod +x sova.sh
 
 # Interactive mode (recommended for first install)
-sudo ./betterdesk.sh
+sudo ./sova.sh
 
 # Automatic mode (non-interactive)
-sudo ./betterdesk.sh --auto
+sudo ./sova.sh --auto
 
 # Skip Go binary SHA256 verification
-sudo ./betterdesk.sh --skip-verify
+sudo ./sova.sh --skip-verify
 
 # Custom API port
-API_PORT=21120 sudo ./betterdesk.sh --auto
+API_PORT=21120 sudo ./sova.sh --auto
 ```
 
 The script will:
 1. Install Go toolchain if not present
-2. Compile `betterdesk-server` from source (single binary)
+2. Compile `sova-server` from source (single binary)
 3. Install Node.js and the web console
-4. Create systemd services (`betterdesk-server.service` + `betterdesk-console.service`)
+4. Create systemd services (`sova-server.service` + `sova-console.service`)
 5. Generate Ed25519 keys (or preserve existing ones)
 6. Create initial admin user (credentials saved to `.admin_credentials`)
 7. Start all services
@@ -551,7 +540,7 @@ The script will:
 
 ```powershell
 # Run PowerShell as Administrator
-git clone https://github.com/UNITRONIX/Rustdesk-FreeConsole.git
+git clone https://github.com/koreshkof/SoVaDesk.git
 cd Rustdesk-FreeConsole
 
 # Interactive mode
@@ -564,17 +553,17 @@ cd Rustdesk-FreeConsole
 .etterdesk.ps1 -SkipVerify
 ```
 
-The script installs Go, compiles the server, sets up NSSM services (`BetterDeskServer` + `BetterDeskConsole`) or scheduled tasks as fallback.
+The script installs Go, compiles the server, sets up NSSM services (`SoVa DeskServer` + `SoVa DeskConsole`) or scheduled tasks as fallback.
 
 ### Docker
 
 **🚀 One-line install (recommended — auto-configures Docker, relay, firewall):**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/koreshkof/SoVaDesk/main/install.sh | sudo bash
 ```
 
-The installer downloads the **official all-in-one** GHCR image (`ghcr.io/unitronix/betterdesk`), detects your relay address, opens firewall ports (UFW/firewalld when active), starts the container, and prints admin credentials plus RustDesk client settings.
+The installer downloads the **official all-in-one** GHCR image (`ghcr.io/unitronix/sova`), detects your relay address, opens firewall ports (UFW/firewalld when active), starts the container, and prints admin credentials plus SoVa client settings.
 
 **Options:**
 
@@ -588,18 +577,18 @@ curl -fsSL .../install.sh | sudo bash -s -- --relay-mode local
 # Fixed public IP / custom admin password
 curl -fsSL .../install.sh | sudo bash -s -- --relay-servers 203.0.113.10:21117 --admin-password 'YourSecurePass'
 
-# Native install (git clone + betterdesk.sh --auto) instead of Docker
+# Native install (git clone + sova.sh --auto) instead of Docker
 curl -fsSL .../install.sh | sudo bash -s -- --native
 ```
 
-Install files land in `/opt/betterdesk/docker` (Docker) or `/opt/betterdesk/source` (native). See `install.sh --help` for all flags.
+Install files land in `/srv/sova-desk/docker` (Docker) or `/srv/sova-desk/source` (native). See `install.sh --help` for all flags.
 
 **🚀 Quick Start (no build required — official single image):**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/docker-compose.quick.single.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/koreshkof/SoVaDesk/main/docker-compose.quick.single.yml -o docker-compose.yml
 docker compose pull && docker compose up -d
-docker compose exec betterdesk betterdesk-show-admin-credentials
+docker compose exec sova sova-show-admin-credentials
 ```
 
 Open http://localhost:5000 — API on port **21121**. See [DOCKER_QUICKSTART.md](docs/docker/DOCKER_QUICKSTART.md) for legacy split layout and more options.
@@ -607,7 +596,7 @@ Open http://localhost:5000 — API on port **21121**. See [DOCKER_QUICKSTART.md]
 **Build from source (advanced):**
 
 ```bash
-git clone https://github.com/UNITRONIX/Rustdesk-FreeConsole.git
+git clone https://github.com/koreshkof/SoVaDesk.git
 cd Rustdesk-FreeConsole
 
 # Build and start (all-in-one: Go server + Node.js console in one container)
@@ -624,8 +613,8 @@ docker compose -f docker-compose.single.yml --profile postgres up -d
 **Legacy multi-container** (via interactive script):
 
 ```bash
-chmod +x betterdesk-docker.sh
-./betterdesk-docker.sh
+chmod +x sova-docker.sh
+./sova-docker.sh
 ```
 
 ### Menu Options
@@ -651,8 +640,8 @@ All scripts provide an interactive menu:
 ### What Gets Installed
 
 ```
-/opt/rustdesk/                    # (Linux) or C:\BetterDesk\ (Windows)
-├── betterdesk-server             # Single Go binary (signal + relay + API)
+/srv/sova-desk/                    # (Linux) or C:\SoVa Desk\ (Windows)
+├── sova-server             # Single Go binary (signal + relay + API)
 ├── id_ed25519                    # Ed25519 private key (mode 0600)
 ├── id_ed25519.pub                # Ed25519 public key (base64)
 ├── db_v2.sqlite3                 # SQLite database (if using SQLite)
@@ -667,48 +656,48 @@ All scripts provide an interactive menu:
 
 ---
 
-## 🖥️ RustDesk Client Configuration
+## 🖥️ SoVa Client Configuration
 
-After installing BetterDesk server, configure your RustDesk desktop clients to connect to it.
+After installing SoVa Server, configure your SoVa desktop clients to connect to it.
 
 ### Basic Setup
 
-1. Open the RustDesk client
+1. Open the SoVa client
 2. Click the **menu (≡)** button → **Network** → **ID/Relay Server**
 3. Fill in:
 
 | Field | Value | Example |
 |-------|-------|---------|
-| **ID Server** | Your server IP or domain | `betterdesk.example.com` |
-| **Relay Server** | Same as ID Server (or leave empty) | `betterdesk.example.com` |
-| **API Server** | `http://<server>:21114` or `:21121` (compat) | `http://betterdesk.example.com:21114` |
+| **ID Server** | Your server IP or domain | `sova.example.com` |
+| **Relay Server** | Same as ID Server (or leave empty) | `sova.example.com` |
+| **API Server** | `http://<server>:21114` or `:21121` (compat) | `http://sova.example.com:21114` |
 | **Key** | Contents of `id_ed25519.pub` on the server | (base64 public key string) |
 
-> **Tip:** The public key can be found in the Web Console under **Dashboard → Server Keys**, or by reading the file `/opt/rustdesk/id_ed25519.pub` (Linux) / `C:\BetterDesk\id_ed25519.pub` (Windows) on the server.
+> **Tip:** The public key can be found in the Web Console under **Dashboard → Server Keys**, or by reading the file `/srv/sova-desk/id_ed25519.pub` (Linux) / `C:\SoVa Desk\id_ed25519.pub` (Windows) on the server.
 
 ### Mass Deployment
 
-BetterDesk supports three automated configuration paths. Full Windows / Intune / PSADT steps: **[docs/setup/RUSTDESK_CLIENT_DEPLOYMENT.md](docs/setup/RUSTDESK_CLIENT_DEPLOYMENT.md)**.
+SoVa Desk supports three automated configuration paths. Full Windows / Intune / PSADT steps: **[docs/setup/RUSTDESK_CLIENT_DEPLOYMENT.md](docs/setup/RUSTDESK_CLIENT_DEPLOYMENT.md)**.
 
-The web console **Dashboard → RustDesk Client Configuration** card provides manual fields, a QR code, **Copy deploy string** (for scripts), and an **Intune / PSADT script** snippet. Set **Client server address** if the panel URL differs from the IP/DNS clients use, set `PANEL_PUBLIC_HOST` in the console `.env` for a single shared host, or configure **Settings → Public client endpoints** (or `PUBLIC_SERVER_ID` / `PUBLIC_RELAY_SERVER` / `PUBLIC_API_URL` in `.env`) when ID server, relay, and API use different public hostnames.
+The web console **Dashboard → SoVa Client Configuration** card provides manual fields, a QR code, **Copy deploy string** (for scripts), and an **Intune / PSADT script** snippet. Set **Client server address** if the panel URL differs from the IP/DNS clients use, set `PANEL_PUBLIC_HOST` in the console `.env` for a single shared host, or configure **Settings → Public client endpoints** (or `PUBLIC_SERVER_ID` / `PUBLIC_RELAY_SERVER` / `PUBLIC_API_URL` in `.env`) when ID server, relay, and API use different public hostnames.
 
 #### 1. QR / deep link
 
 ```
-rustdesk://config/<standard-base64-encoded-json>
+sova://config/<standard-base64-encoded-json>
 ```
 
-#### 2. CLI / Import (`rustdesk.exe --config`)
+#### 2. CLI / Import (`sova.exe --config`)
 
-Uses a **reversed** base64 string (no `=` padding) — the same format as **Settings → Network → Import Server Config** in the RustDesk client. **Do not** pass raw JSON.
+Uses a **reversed** base64 string (no `=` padding) — the same format as **Settings → Network → Import Server Config** in the SoVa client. **Do not** pass raw JSON.
 
 JSON payload (before encoding):
 
 ```json
 {
-  "host": "betterdesk.example.com",
-  "relay": "betterdesk.example.com",
-  "api": "http://betterdesk.example.com:21114",
+  "host": "sova.example.com",
+  "relay": "sova.example.com",
+  "api": "http://sova.example.com:21114",
   "key": "<contents-of-id_ed25519.pub>"
 }
 ```
@@ -716,21 +705,21 @@ JSON payload (before encoding):
 PowerShell (generate deploy string):
 
 ```powershell
-$json = @{ host='betterdesk.example.com'; relay='betterdesk.example.com'; api='http://betterdesk.example.com:21114'; key='<pubkey>' } | ConvertTo-Json -Compress
+$json = @{ host='sova.example.com'; relay='sova.example.com'; api='http://sova.example.com:21114'; key='<pubkey>' } | ConvertTo-Json -Compress
 $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($json)).TrimEnd('=')
 $CfgString = -join ($b64[-1..-($b64.Length)] -join '')
-& "${env:ProgramFiles}\RustDesk\rustdesk.exe" --config $CfgString
+& "${env:ProgramFiles}\SoVa\sova.exe" --config $CfgString
 ```
 
 Example template script: [`scripts/deploy/rustdesk-apply-config.ps1.example`](scripts/deploy/rustdesk-apply-config.ps1.example).
 
 ### Desktop Client Login
 
-RustDesk desktop clients can **log in** to the BetterDesk server using their user account. This enables address book synchronization, device grouping, and audit trail per user.
+SoVa desktop clients can **log in** to the SoVa Server using their user account. This enables address book synchronization, device grouping, and audit trail per user.
 
 #### How to Log In
 
-1. Open the RustDesk client
+1. Open the SoVa client
 2. Click the **account icon** (person silhouette) in the bottom-left corner
 3. Enter your **username** and **password** — the same credentials as the Web Console (local accounts or **LDAP/Active Directory** when LDAP is enabled in Settings)
 4. Click **Login**
@@ -748,7 +737,7 @@ RustDesk desktop clients can **log in** to the BetterDesk server using their use
 
 #### User Roles and API Access
 
-| Role | Web Panel | RustDesk Client Login | Address Book | Device Groups | Device List |
+| Role | Web Panel | SoVa Client Login | Address Book | Device Groups | Device List |
 |------|:---------:|:--------------------:|:------------:|:-------------:|:-----------:|
 | **Admin** | ✅ Full access | ✅ | ✅ | ✅ | ✅ |
 | **Operator** | ✅ Device management | ✅ | ✅ | ✅ | ✅ |
@@ -771,22 +760,22 @@ RustDesk desktop clients can **log in** to the BetterDesk server using their use
 
 ### Enabling Pro Features
 
-Connecting the RustDesk desktop client to a BetterDesk server with the API Server field configured **automatically activates Pro-level features** — no license key required. These features are built into the standard RustDesk client but remain dormant until a compatible API server is detected.
+Connecting the SoVa desktop client to a SoVa Server with the API Server field configured **automatically activates Pro-level features** — no license key required. These features are built into the standard SoVa client but remain dormant until a compatible API server is detected.
 
 #### How to Activate
 
-1. Open the RustDesk client
+1. Open the SoVa client
 2. Go to **Settings (⚙) → Network → ID/Relay Server** (or **≡ → Network**)
 3. Fill in all four fields:
 
 | Field | Value |
 |-------|-------|
-| **ID Server** | `betterdesk.example.com` |
-| **Relay Server** | `betterdesk.example.com` (or leave empty to auto-detect) |
-| **API Server** | `http://betterdesk.example.com:21114` |
+| **ID Server** | `sova.example.com` |
+| **Relay Server** | `sova.example.com` (or leave empty to auto-detect) |
+| **API Server** | `http://sova.example.com:21114` |
 | **Key** | Contents of `id_ed25519.pub` from the server |
 
-4. Click the **account icon** (bottom-left) and **log in** with your BetterDesk credentials
+4. Click the **account icon** (bottom-left) and **log in** with your SoVa Desk credentials
 5. Pro features activate immediately upon successful login
 
 > **Important:** The **API Server** field must point to the **Go** HTTP API (default port **21114**), e.g. `http://your-server:21114`.
@@ -822,7 +811,7 @@ Use the dashboard **Copy deploy string** or generate the reversed base64 string 
 
 ```powershell
 # After MSI — elevated PowerShell
-& "${env:ProgramFiles}\RustDesk\rustdesk.exe" --config '<deploy-string-from-dashboard>'
+& "${env:ProgramFiles}\SoVa\sova.exe" --config '<deploy-string-from-dashboard>'
 ```
 
 > **Note:** Users still need to log in individually after initial configuration to activate per-user features (address book sync, audit trail, etc.).
@@ -838,16 +827,16 @@ Ensure the following **outbound** ports are accessible from clients to the serve
 | 21117 | TCP | Relay (connection forwarding) |
 | 21118 | TCP (WS) | WebSocket signal (optional, web clients) |
 | 21119 | TCP (WS) | WebSocket relay (optional, web clients) |
-| 21114 | TCP | Go API — default (RustDesk client + REST) |
+| 21114 | TCP | Go API — default (SoVa client + REST) |
 | 21121 | TCP | Backward-compat proxy to Go :21114 |
 
 ---
 
 ## 🔒 TLS / SSL Certificates
 
-BetterDesk supports TLS on all layers: Go server transport (signal + relay), Go server HTTPS API, and the Node.js web console.
+SoVa Desk supports TLS on all layers: Go server transport (signal + relay), Go server HTTPS API, and the Node.js web console.
 
-**External reverse proxy (Caddy/Nginx on :443):** terminate TLS at the proxy; BetterDesk panel stays HTTP on `127.0.0.1:5000`. See [docs/setup/REVERSE_PROXY.md](docs/setup/REVERSE_PROXY.md) and `sudo betterdesk.sh` → SSL Configuration → **External reverse proxy**.
+**External reverse proxy (Caddy/Nginx on :443):** terminate TLS at the proxy; SoVa Desk panel stays HTTP on `127.0.0.1:5000`. See [docs/setup/REVERSE_PROXY.md](docs/setup/REVERSE_PROXY.md) and `sudo sova.sh` → SSL Configuration → **External reverse proxy**.
 
 ### Self-Signed Certificate (Quick Start)
 
@@ -855,26 +844,26 @@ For testing or internal networks, generate a self-signed certificate:
 
 ```bash
 # Create certificate directory
-mkdir -p /opt/rustdesk/ssl
+mkdir -p /srv/sova-desk/ssl
 
 # Generate a self-signed certificate (valid for 3 years)
 openssl req -x509 -nodes -days 1095 -newkey rsa:2048 \
-  -keyout /opt/rustdesk/ssl/betterdesk.key \
-  -out /opt/rustdesk/ssl/betterdesk.crt \
-  -subj "/CN=$(hostname -f)/O=BetterDesk/C=US" \
+  -keyout /srv/sova-desk/ssl/sova.key \
+  -out /srv/sova-desk/ssl/sova.crt \
+  -subj "/CN=$(hostname -f)/O=SoVa Desk/C=US" \
   -addext "subjectAltName=DNS:$(hostname -f),DNS:localhost,IP:$(curl -s ifconfig.me),IP:127.0.0.1"
 
 # Secure the private key
-chmod 600 /opt/rustdesk/ssl/betterdesk.key
+chmod 600 /srv/sova-desk/ssl/sova.key
 ```
 
 > **Windows (PowerShell)**:
 > ```powershell
-> New-Item -ItemType Directory -Path "C:\BetterDesk\ssl" -Force
+> New-Item -ItemType Directory -Path "C:\SoVa Desk\ssl" -Force
 > openssl req -x509 -nodes -days 1095 -newkey rsa:2048 `
->   -keyout "C:\BetterDesk\ssl\betterdesk.key" `
->   -out "C:\BetterDesk\ssl\betterdesk.crt" `
->   -subj "/CN=localhost/O=BetterDesk"
+>   -keyout "C:\SoVa Desk\ssl\sova.key" `
+>   -out "C:\SoVa Desk\ssl\sova.crt" `
+>   -subj "/CN=localhost/O=SoVa Desk"
 > ```
 
 ### Applying TLS to Go Server
@@ -883,26 +872,26 @@ Once you have certificate files, configure the Go server:
 
 ```bash
 # TLS on signal ports (21116 TCP + 21115 + 21118 WSS)
-./betterdesk-server -tls-signal -tls-cert /opt/rustdesk/ssl/betterdesk.crt -tls-key /opt/rustdesk/ssl/betterdesk.key
+./sova-server -tls-signal -tls-cert /srv/sova-desk/ssl/sova.crt -tls-key /srv/sova-desk/ssl/sova.key
 
 # TLS on relay ports (21117 TCP + 21119 WSS)
-./betterdesk-server -tls-relay -tls-cert /opt/rustdesk/ssl/betterdesk.crt -tls-key /opt/rustdesk/ssl/betterdesk.key
+./sova-server -tls-relay -tls-cert /srv/sova-desk/ssl/sova.crt -tls-key /srv/sova-desk/ssl/sova.key
 
 # TLS everywhere + force HTTPS on API
-./betterdesk-server -tls-signal -tls-relay -force-https \
-  -tls-cert /opt/rustdesk/ssl/betterdesk.crt \
-  -tls-key /opt/rustdesk/ssl/betterdesk.key
+./sova-server -tls-signal -tls-relay -force-https \
+  -tls-cert /srv/sova-desk/ssl/sova.crt \
+  -tls-key /srv/sova-desk/ssl/sova.key
 ```
 
-For systemd, add the flags to `ExecStart` in `/etc/systemd/system/betterdesk-server.service`:
+For systemd, add the flags to `ExecStart` in `/etc/systemd/system/sova-server.service`:
 ```ini
-ExecStart=/opt/rustdesk/betterdesk-server -mode all ... \
+ExecStart=/srv/sova-desk/sova-server -mode all ... \
   -tls-signal -tls-relay \
-  -tls-cert /opt/rustdesk/ssl/betterdesk.crt \
-  -tls-key /opt/rustdesk/ssl/betterdesk.key
+  -tls-cert /srv/sova-desk/ssl/sova.crt \
+  -tls-key /srv/sova-desk/ssl/sova.key
 ```
 
-> **Dual-mode**: BetterDesk auto-detects plain vs TLS on the **same port** (first-byte `0x16` detection). Existing non-TLS clients continue to work without changes.
+> **Dual-mode**: SoVa Desk auto-detects plain vs TLS on the **same port** (first-byte `0x16` detection). Existing non-TLS clients continue to work without changes.
 
 ### Applying TLS to Web Console (Node.js)
 
@@ -910,8 +899,8 @@ Edit the console `.env` file:
 
 ```bash
 HTTPS_ENABLED=true
-SSL_CERT_PATH=/opt/rustdesk/ssl/betterdesk.crt
-SSL_KEY_PATH=/opt/rustdesk/ssl/betterdesk.key
+SSL_CERT_PATH=/srv/sova-desk/ssl/sova.crt
+SSL_KEY_PATH=/srv/sova-desk/ssl/sova.key
 HTTP_REDIRECT_HTTPS=true
 ```
 
@@ -929,11 +918,11 @@ For production servers with a public domain:
 sudo apt install certbot  # Debian/Ubuntu
 
 # Obtain certificate (standalone mode, port 80 must be open)
-sudo certbot certonly --standalone -d betterdesk.example.com
+sudo certbot certonly --standalone -d sova.example.com
 
 # Certificate files:
-# /etc/letsencrypt/live/betterdesk.example.com/fullchain.pem
-# /etc/letsencrypt/live/betterdesk.example.com/privkey.pem
+# /etc/letsencrypt/live/sova.example.com/fullchain.pem
+# /etc/letsencrypt/live/sova.example.com/privkey.pem
 ```
 
 Then configure both the Go server and Node.js console to use these paths.
@@ -942,9 +931,9 @@ Then configure both the Go server and Node.js console to use these paths.
 
 ### Automatic TLS During Installation
 
-The ALL-IN-ONE scripts (`betterdesk.sh` / `betterdesk.ps1`) **automatically generate a self-signed certificate** during every fresh installation:
+The ALL-IN-ONE scripts (`sova.sh` / `sova.ps1`) **automatically generate a self-signed certificate** during every fresh installation:
 
-1. **Certificate location**: `<RUSTDESK_PATH>/ssl/betterdesk.crt` + `betterdesk.key`
+1. **Certificate location**: `<RUSTDESK_PATH>/ssl/sova.crt` + `sova.key`
 2. **Validity**: 3 years, RSA 2048-bit, with SAN (server IP + localhost)
 3. **Go server flags**: `-tls-cert`, `-tls-key`, `-tls-signal`, `-tls-relay`, `-force-https` added automatically
 4. **Node.js console**: `.env` pre-populated with `SSL_CERT_PATH` / `SSL_KEY_PATH` and `BETTERDESK_API_URL` set to `https://`
@@ -1068,7 +1057,7 @@ curl -H "X-API-Key: <your_api_key>" http://localhost:21114/api/peers
 
 ### RustDesk Client Endpoints (Go Server, Port 21114)
 
-These endpoints are served on the Go server's management API port because the RustDesk desktop client calculates the API port as `signal_port - 2` (21116 - 2 = 21114):
+These endpoints are served on the Go server's management API port because the SoVa desktop client calculates the API port as `signal_port - 2` (21116 - 2 = 21114):
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -1155,61 +1144,61 @@ ws.onmessage = (event) => {
 
 ## 🔄 Migration Guide
 
-### From Original RustDesk (Rust) to BetterDesk (Go)
+### From Original RustDesk (Rust) to SoVa Desk (Go)
 
-The migration tool (`betterdesk-server/tools/migrate/`) supports multiple migration paths:
+The migration tool (`sova-server/tools/migrate/`) supports multiple migration paths:
 
 **Linux/macOS:**
 ```bash
 # Compile migration tool
-cd betterdesk-server/tools/migrate
+cd sova-server/tools/migrate
 go build -o migrate .
 
-# Mode 1: Rust hbbs → BetterDesk Go (preserves peer table → peers)
-./migrate -mode rust2go -src /opt/rustdesk/db_v2.sqlite3 -dst /opt/betterdesk/db_v2.sqlite3
+# Mode 1: Rust hbbs → SoVa Desk Go (preserves peer table → peers)
+./migrate -mode rust2go -src /srv/sova-desk/db_v2.sqlite3 -dst /srv/sova-desk/db_v2.sqlite3
 
 # Mode 2: SQLite → PostgreSQL
-./migrate -mode sqlite2pg -src /opt/betterdesk/db_v2.sqlite3   -dst "postgres://user:pass@localhost:5432/betterdesk"
+./migrate -mode sqlite2pg -src /srv/sova-desk/db_v2.sqlite3   -dst "postgres://user:pass@localhost:5432/sova"
 
 # Mode 3: PostgreSQL → SQLite (reverse)
 ./migrate -mode pg2sqlite -src "postgres://..." -dst ./backup.sqlite3
 
 # Mode 4: Node.js console → Go server
-./migrate -mode nodejs2go -src /opt/betterdesk/web-console/betterdesk.db   -dst /opt/betterdesk/db_v2.sqlite3
+./migrate -mode nodejs2go -src /srv/sova-desk/web-console/sova.db   -dst /srv/sova-desk/db_v2.sqlite3
 
 # Mode 5: Backup
-./migrate -mode backup -src /opt/betterdesk/db_v2.sqlite3
+./migrate -mode backup -src /srv/sova-desk/db_v2.sqlite3
 ```
 
 **Windows (PowerShell):**
 ```powershell
 # Compile migration tool (requires Go installed)
-cd betterdesk-server\tools\migrate
+cd sova-server\tools\migrate
 go build -o migrate.exe .
 
 # Usage (same modes as Linux)
-.\migrate.exe -mode rust2go -src C:\BetterDesk\db_v2.sqlite3 -dst C:\BetterDesk\db_v2_new.sqlite3
-.\migrate.exe -mode sqlite2pg -src C:\BetterDesk\db_v2.sqlite3 -dst "postgres://user:pass@localhost:5432/betterdesk"
+.\migrate.exe -mode rust2go -src C:\SoVa Desk\db_v2.sqlite3 -dst C:\SoVa Desk\db_v2_new.sqlite3
+.\migrate.exe -mode sqlite2pg -src C:\SoVa Desk\db_v2.sqlite3 -dst "postgres://user:pass@localhost:5432/sova"
 ```
 
-> **Note:** Windows users need [Go](https://go.dev/dl/) installed to compile the migration tool. Pre-built binaries are available in [GitHub Releases](https://github.com/UNITRONIX/BetterDesk/releases) (when available).
+> **Note:** Windows users need [Go](https://go.dev/dl/) installed to compile the migration tool. Pre-built binaries are available in [GitHub Releases](https://github.com/koreshkof/SoVaDesk/releases) (when available).
 
-The migration tool auto-detects the source schema (original RustDesk `peer` table vs BetterDesk `peers` table) and maps columns accordingly. Ed25519 keys, UUIDs, ID history, bans, and tags are fully preserved.
+The migration tool auto-detects the source schema (original RustDesk `peer` table vs SoVa Desk `peers` table) and maps columns accordingly. Ed25519 keys, UUIDs, ID history, bans, and tags are fully preserved.
 
 ### Using ALL-IN-ONE Scripts
 
-Both `betterdesk.sh` and `betterdesk.ps1` include built-in migration options:
+Both `sova.sh` and `sova.ps1` include built-in migration options:
 - **Option M** — Migrate from existing RustDesk Docker installation
 - **Option P** — Database migration (SQLite ↔ PostgreSQL)
 
 ### From Existing Docker RustDesk
 
 ```bash
-./betterdesk-docker.sh
+./sova-docker.sh
 # Select: M (Migrate from existing RustDesk)
 ```
 
-The wizard auto-detects existing containers, creates a backup, and migrates data to BetterDesk.
+The wizard auto-detects existing containers, creates a backup, and migrates data to SoVa Desk.
 
 ---
 
@@ -1221,30 +1210,30 @@ Available at `GET /metrics` (no authentication required):
 
 ```
 # Counters (monotonic)
-betterdesk_registrations_total
-betterdesk_expired_total
-betterdesk_relay_sessions_total
-betterdesk_relay_bytes_total
-betterdesk_bandwidth_throttle_hits_total
-betterdesk_audit_events_total
+sova_registrations_total
+sova_expired_total
+sova_relay_sessions_total
+sova_relay_bytes_total
+sova_bandwidth_throttle_hits_total
+sova_audit_events_total
 
 # Gauges (current values)
-betterdesk_uptime_seconds
-betterdesk_peers_total
-betterdesk_peers_online
-betterdesk_peers_degraded
-betterdesk_peers_critical
-betterdesk_peers_offline
-betterdesk_peers_banned
-betterdesk_peers_udp
-betterdesk_peers_tcp
-betterdesk_peers_ws
-betterdesk_relay_active_sessions
-betterdesk_blocklist_entries
-betterdesk_event_subscribers
-betterdesk_goroutines
-betterdesk_memory_alloc_bytes
-betterdesk_memory_sys_bytes
+sova_uptime_seconds
+sova_peers_total
+sova_peers_online
+sova_peers_degraded
+sova_peers_critical
+sova_peers_offline
+sova_peers_banned
+sova_peers_udp
+sova_peers_tcp
+sova_peers_ws
+sova_relay_active_sessions
+sova_blocklist_entries
+sova_event_subscribers
+sova_goroutines
+sova_memory_alloc_bytes
+sova_memory_sys_bytes
 ```
 
 ### Grafana Integration
@@ -1255,7 +1244,7 @@ Point a Prometheus scraper at `http://your-server:21114/metrics` and import the 
 
 ```bash
 # Enable file-based audit log
-./betterdesk-server -audit-log /var/log/betterdesk/audit.jsonl
+./sova-server -audit-log /var/log/sova/audit.jsonl
 ```
 
 Events logged: login, failed auth, peer banned/unbanned, config changes, ID changes, blocklist modifications. Each event includes timestamp, action, actor, target, IP, and details.
@@ -1268,13 +1257,13 @@ Events logged: login, failed auth, peer banned/unbanned, config changes, ID chan
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| **Key mismatch** errors | Keys changed during install | Restore from backup: `cp /opt/rustdesk-backup-*/id_ed25519* /opt/rustdesk/` |
-| **All devices offline** | Database missing `last_online` column | Run repair: `sudo ./betterdesk.sh` → option 3 |
+| **Key mismatch** errors | Keys changed during install | Restore from backup: `cp /srv/sova-desk-backup-*/id_ed25519* /srv/sova-desk/` |
+| **All devices offline** | Database missing `last_online` column | Run repair: `sudo ./sova.sh` → option 3 |
 | **API not responding** | Wrong binary or port | Check: `curl http://localhost:21114/api/health` |
 | **E2E encryption** | Not showing green lock | Verify server is v2.4.0+; enable `--tls-relay` for extra layer |
 | **Docker: "pull access denied"** | Images not on Docker Hub | Build locally: `docker compose build` |
 | **Docker: "no such table"** | Wrong binary in container | Rebuild: `docker compose build --no-cache` |
-| **Services won't start** | Permission issues | `sudo chmod 600 /opt/rustdesk/id_ed25519` |
+| **Services won't start** | Permission issues | `sudo chmod 600 /srv/sova-desk/id_ed25519` |
 | **Go compilation fails** | Missing Go toolchain | Script auto-installs, or: `sudo apt install golang-go` |
 | **PostgreSQL connection** | Wrong DSN format | Must start with `postgres://` or `postgresql://` |
 | **Connect button** won't work | Custom RustDesk scheme | Set via browser console: `setCustomScheme('your-scheme')` |
@@ -1283,15 +1272,15 @@ Events logged: login, failed auth, peer banned/unbanned, config changes, ID chan
 
 ```bash
 # Linux — run built-in diagnostics
-sudo ./betterdesk.sh  # Select option 8
+sudo ./sova.sh  # Select option 8
 
 # Check service status
-sudo systemctl status betterdesk-server
-sudo systemctl status betterdesk-console
+sudo systemctl status sova-server
+sudo systemctl status sova-console
 
 # Check logs
-sudo journalctl -u betterdesk-server -n 100 --no-pager
-sudo journalctl -u betterdesk-console -n 100 --no-pager
+sudo journalctl -u sova-server -n 100 --no-pager
+sudo journalctl -u sova-console -n 100 --no-pager
 
 # Test API
 curl http://localhost:21114/api/health
@@ -1301,22 +1290,22 @@ curl http://localhost:21114/api/server/stats
 curl http://localhost:21114/metrics
 
 # Windows — check services
-Get-Service BetterDeskServer
-Get-Service BetterDeskConsole
+Get-Service SoVa DeskServer
+Get-Service SoVa DeskConsole
 ```
 
 ### Key Management
 
 ```bash
 # Backup keys (CRITICAL — losing keys disconnects ALL clients)
-cp /opt/rustdesk/id_ed25519 /opt/rustdesk/id_ed25519.backup
-cp /opt/rustdesk/id_ed25519.pub /opt/rustdesk/id_ed25519.pub.backup
+cp /srv/sova-desk/id_ed25519 /srv/sova-desk/id_ed25519.backup
+cp /srv/sova-desk/id_ed25519.pub /srv/sova-desk/id_ed25519.pub.backup
 
 # Restore keys from automatic backup
-BACKUP=$(ls -d /opt/rustdesk-backup-* | sort | tail -1)
-sudo cp $BACKUP/id_ed25519* /opt/rustdesk/
-sudo chmod 600 /opt/rustdesk/id_ed25519
-sudo systemctl restart betterdesk-server
+BACKUP=$(ls -d /srv/sova-desk-backup-* | sort | tail -1)
+sudo cp $BACKUP/id_ed25519* /srv/sova-desk/
+sudo chmod 600 /srv/sova-desk/id_ed25519
+sudo systemctl restart sova-server
 ```
 
 ### Firewall Configuration
@@ -1328,7 +1317,7 @@ sudo ufw allow 21116/tcp    # Signal (TCP)
 sudo ufw allow 21116/udp    # Signal (UDP)
 sudo ufw allow 21117/tcp    # Relay
 sudo ufw allow 21114/tcp    # Go API (default, direct)
-sudo ufw allow 21121/tcp    # RustDesk client API (backward-compat proxy)
+sudo ufw allow 21121/tcp    # SoVa client API (backward-compat proxy)
 
 # Admin ports (LAN only)
 sudo ufw allow from 192.168.0.0/16 to any port 21114 proto tcp  # REST API
@@ -1341,7 +1330,7 @@ sudo ufw allow from 192.168.0.0/16 to any port 5000 proto tcp   # Web Console
 
 ### Overview
 
-RustDesk clients support end-to-end encryption for remote desktop sessions. BetterDesk Server fully supports this — both P2P (hole-punch) and relay-mode connections establish an encrypted E2E channel with NaCl key exchange.
+SoVa clients support end-to-end encryption for remote desktop sessions. SoVa Server fully supports this — both P2P (hole-punch) and relay-mode connections establish an encrypted E2E channel with NaCl key exchange.
 
 ### How It Works
 
@@ -1361,15 +1350,15 @@ RustDesk clients support end-to-end encryption for remote desktop sessions. Bett
 
 ### Verified Behavior
 
-- Green lock indicator appears in the RustDesk client for all connection modes
+- Green lock indicator appears in the SoVa client for all connection modes
 - `Message.SignedId` + `Message.PublicKey` handshake confirmed between peers via debug logging
-- Compatible with RustDesk clients v1.1.9+ (standard and custom builds)
+- Compatible with SoVa clients v1.1.9+ (standard and custom builds)
 
 ---
 
 ## � Chat E2E Encryption
 
-BetterDesk includes a built-in chat system between operators and end-user devices with full end-to-end encryption.
+SoVa Desk includes a built-in chat system between operators and end-user devices with full end-to-end encryption.
 
 ### Protocol
 
@@ -1453,7 +1442,7 @@ The Go server sends a UDP broadcast magic packet (6× `0xFF` + 16× MAC address)
 
 ## �🛠️ Technology Stack
 
-### BetterDesk Go Server
+### SoVa Desk Go Server
 
 | Component | Technology |
 |-----------|-----------|
@@ -1490,10 +1479,10 @@ The Go server sends a UDP broadcast magic packet (6× `0xFF` + 16× MAC address)
 
 | Component | Technology |
 |-----------|-----------|
-| **Linux services** | systemd (`betterdesk-server.service` + `betterdesk-console.service`) |
-| **Windows services** | NSSM (`BetterDeskServer` + `BetterDeskConsole`) |
+| **Linux services** | systemd (`sova-server.service` + `sova-console.service`) |
+| **Windows services** | NSSM (`SoVa DeskServer` + `SoVa DeskConsole`) |
 | **Docker** | Docker Compose with local image builds |
-| **Installation** | Bash (`betterdesk.sh`) + PowerShell (`betterdesk.ps1`) ALL-IN-ONE |
+| **Installation** | Bash (`sova.sh`) + PowerShell (`sova.ps1`) ALL-IN-ONE |
 | **CI/CD** | GitHub Actions (multi-platform build) |
 
 ---
@@ -1503,22 +1492,22 @@ The Go server sends a UDP broadcast magic packet (6× `0xFF` + 16× MAC address)
 ### Go Server
 
 ```bash
-cd betterdesk-server
+cd sova-server
 
 # Linux (amd64)
-CGO_ENABLED=0 go build -ldflags="-s -w" -o betterdesk-server .
+CGO_ENABLED=0 go build -ldflags="-s -w" -o sova-server .
 
 # Linux (arm64)
-CGO_ENABLED=0 GOARCH=arm64 go build -ldflags="-s -w" -o betterdesk-server-arm64 .
+CGO_ENABLED=0 GOARCH=arm64 go build -ldflags="-s -w" -o sova-server-arm64 .
 
 # Windows
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o betterdesk-server.exe .
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o sova-server.exe .
 ```
 
 ### Migration Tool
 
 ```bash
-cd betterdesk-server/tools/migrate
+cd sova-server/tools/migrate
 go build -o migrate .
 ```
 
@@ -1534,7 +1523,7 @@ npm start
 
 ## 🌍 Internationalization (i18n)
 
-BetterDesk Console supports 25+ languages through JSON-based translations with auto-discovery.
+SoVa Desk Console supports 25+ languages through JSON-based translations with auto-discovery.
 
 **Included languages**: 🇬🇧 English, 🇵🇱 Polish, 🇩🇪 German, 🇫🇷 French, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, 🇳🇱 Dutch, 🇨🇳 Chinese (Simplified), 🇯🇵 Japanese, 🇰🇷 Korean, 🇸🇦 Arabic, 🇮🇱 Hebrew, 🇺🇦 Ukrainian, 🇹🇷 Turkish, 🇮🇳 Hindi, 🇸🇪 Swedish, 🇳🇴 Norwegian, 🇩🇰 Danish, 🇫🇮 Finnish, 🇨🇿 Czech, 🇭🇺 Hungarian, 🇷🇴 Romanian, 🇹🇭 Thai, 🇻🇳 Vietnamese, 🇮🇩 Indonesian
 
@@ -1594,7 +1583,7 @@ See [CDAP Documentation](docs/cdap/OVERVIEW.md) and [SDK Documentation](docs/sdk
 
 ## 🖥️ Desktop Clients
 
-### BetterDesk MGMT Client (Operator/Admin)
+### SoVa Desk MGMT Client (Operator/Admin)
 
 A Tauri v2 + SolidJS desktop application for operators and administrators.
 
@@ -1614,9 +1603,9 @@ A Tauri v2 + SolidJS desktop application for operators and administrators.
 - Single-instance enforcement (Windows mutex)
 - Full i18n (English + Polish, ~60 keys)
 
-**Build**: `cd betterdesk-mgmt && pnpm install && pnpm tauri build`
+**Build**: `cd sova-mgmt && pnpm install && pnpm tauri build`
 
-### BetterDesk Agent Client (Endpoint Device)
+### SoVa Agent Client (Endpoint Device)
 
 A lightweight Tauri v2 agent installed on end-user devices.
 
@@ -1630,7 +1619,7 @@ A lightweight Tauri v2 agent installed on end-user devices.
 - Minimal UI (480×520 single window)
 - Full i18n (English + Polish, ~120 keys)
 
-**Build**: `cd betterdesk-agent-client && pnpm install && pnpm tauri build`
+**Build**: `cd sova-agent-client && pnpm install && pnpm tauri build`
 
 ### Native CDAP Agent (Go)
 
@@ -1640,13 +1629,13 @@ A headless Go binary for servers and IoT devices.
 - Terminal, file browser, clipboard, screenshot capabilities
 - Systemd / NSSM service installers
 
-**Build**: `cd betterdesk-agent && go build -o betterdesk-agent .`
+**Build**: `cd sova-agent && go build -o sova-agent .`
 
 ---
 
 ## 🌐 Web Remote Desktop
 
-BetterDesk includes a browser-based remote desktop client accessible from the Web Console.
+SoVa Desk includes a browser-based remote desktop client accessible from the Web Console.
 
 ### Features
 
@@ -1689,7 +1678,7 @@ client.stopRecording();   // Produces .webm file download
 
 ```
 Rustdesk-FreeConsole/
-├── betterdesk-server/           # Go server (~20K LOC)
+├── sova-server/           # Go server (~20K LOC)
 │   ├── main.go                  # Entry point, flags, boot sequence
 │   ├── signal/                  # Signal server (UDP/TCP/WS)
 │   ├── relay/                   # Relay server (TCP/WS)
@@ -1718,14 +1707,14 @@ Rustdesk-FreeConsole/
 │   ├── views/                   # EJS templates
 │   ├── public/                  # Static assets (CSS, JS)
 │   └── lang/                    # i18n translations (EN, PL)
-├── betterdesk-mgmt/             # MGMT Desktop Client (Tauri v2 + SolidJS)
-├── betterdesk-agent-client/     # Agent Client (Tauri v2 + SolidJS)
-├── betterdesk-agent/            # Native CDAP Agent (Go)
+├── sova-mgmt/             # MGMT Desktop Client (Tauri v2 + SolidJS)
+├── sova-agent-client/     # Agent Client (Tauri v2 + SolidJS)
+├── sova-agent/            # Native CDAP Agent (Go)
 ├── sdks/                        # CDAP Bridge SDKs (Python + Node.js)
 ├── bridges/                     # Reference CDAP Bridges (Modbus, SNMP, REST)
-├── betterdesk.sh                # Linux ALL-IN-ONE installer (v2.4.0)
-├── betterdesk.ps1               # Windows ALL-IN-ONE installer (v2.4.0)
-├── betterdesk-docker.sh         # Docker installer (v2.4.0)
+├── sova.sh                # Linux ALL-IN-ONE installer (v2.4.0)
+├── sova.ps1               # Windows ALL-IN-ONE installer (v2.4.0)
+├── sova-docker.sh         # Docker installer (v2.4.0)
 ├── docker-compose.yml           # Docker orchestration
 ├── docs/                        # Documentation (architecture, CDAP, SDK, security)
 ├── dev_modules/                 # Development & testing utilities
@@ -1740,22 +1729,22 @@ Contributions are welcome! See [CONTRIBUTING.md](docs/development/CONTRIBUTING.m
 
 ### Reporting Issues
 
-1. Run diagnostics: `sudo ./betterdesk.sh` → option 8
-2. Collect logs: `journalctl -u betterdesk-server -n 100`
-3. Open a [GitHub Issue](https://github.com/UNITRONIX/Rustdesk-FreeConsole/issues) with system info, logs, and reproduction steps
+1. Run diagnostics: `sudo ./sova.sh` → option 8
+2. Collect logs: `journalctl -u sova-server -n 100`
+3. Open a [GitHub Issue](https://github.com/koreshkof/SoVaDesk/issues) with system info, logs, and reproduction steps
 
 ### Pull Requests
 
 1. Fork → branch (`feature/your-feature`) → commit → push → PR
 2. Follow existing code style and conventions
 3. Update documentation and i18n keys for new features
-4. Test with real RustDesk clients on both Linux and Windows
+4. Test with real SoVa clients on both Linux and Windows
 
 ---
 
 ## 📄 License
 
-BetterDesk is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE).
+SoVa Desk is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE).
 
 **Development status:** AGPL-3.0 applies to the active development branch (`dev`).
 Stable release **v3.4.0** will be the first version published under **AGPL-3.0**.
@@ -1763,13 +1752,13 @@ Releases **v3.3.x and earlier** remain under **Apache 2.0** as originally publis
 
 ### Clean-Room Implementation
 
-BetterDesk Server (`betterdesk-server/`) is a **clean-room implementation** of the RustDesk rendezvous and relay protocol. Like how any HTTP server implements the HTTP protocol without being "derived from" Apache or Nginx, BetterDesk implements published protocol specifications for compatibility with RustDesk clients — but contains **no RustDesk source code**.
+SoVa Server (`sova-server/`) is a **clean-room implementation** of the RustDesk rendezvous and relay protocol. Like how any HTTP server implements the HTTP protocol without being "derived from" Apache or Nginx, SoVa Desk implements published protocol specifications for compatibility with SoVa clients — but contains **no RustDesk source code**.
 
 - **Go imports**: No `github.com/rustdesk/*` dependencies
 - **Code review**: No RustDesk copyright headers or attribution
 - **Protocol**: Uses independently authored `.proto` specifications
 
-BetterDesk Console (`web-nodejs/`) is an entirely original Node.js/Express application.
+SoVa Desk Console (`web-nodejs/`) is an entirely original Node.js/Express application.
 
 ### Archive Directory
 
@@ -1777,7 +1766,7 @@ The `archive/` directory (excluded from distribution via `.gitignore`) contains 
 
 ### Trademark Notice
 
-"RustDesk" is a trademark of the RustDesk Team. BetterDesk is an independent project that implements the RustDesk protocol for client compatibility. Use of the name "RustDesk" in this project is purely descriptive (indicating protocol compatibility) and does not imply affiliation with or endorsement by the RustDesk Team.
+"RustDesk" is a trademark of the RustDesk Team. SoVa Desk is an independent project that implements the RustDesk protocol for client compatibility. Use of the name "RustDesk" in this project is purely descriptive (indicating protocol compatibility) and does not imply affiliation with or endorsement by the RustDesk Team.
 
 ---
 
@@ -1795,17 +1784,17 @@ The `archive/` directory (excluded from distribution via `.gitignore`) contains 
 ## 📞 Support
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/UNITRONIX/Rustdesk-FreeConsole/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/UNITRONIX/Rustdesk-FreeConsole/discussions)
+- **Issues**: [GitHub Issues](https://github.com/koreshkof/SoVaDesk/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/koreshkof/SoVaDesk/discussions)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by UNITRONIX & the community**
+**Made with ❤️ by SoVa & the community**
 
 If you find this project useful, please consider giving it a ⭐ on GitHub!
 
-[⬆ Back to Top](#-betterdesk--rustdesk-compatible-server--web-console)
+[⬆ Back to Top](#-sova--rustdesk-compatible-server--web-console)
 
 </div>

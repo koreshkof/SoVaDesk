@@ -4,7 +4,7 @@
 # Combines Go server (signal + relay + API) and Node.js web console
 # into a single container using supervisord as process manager.
 #
-# Build:  docker build -t betterdesk:local .
+# Build:  docker build -t sova-desk:local .
 # Run:    docker compose up -d
 #
 # Ports:
@@ -23,17 +23,17 @@ FROM golang:1.26-alpine AS go-builder
 RUN apk add --no-cache git || { sleep 2 && apk add --no-cache git; }
 
 WORKDIR /src
-COPY betterdesk-server/go.mod betterdesk-server/go.sum ./
+COPY sova-server/go.mod sova-server/go.sum ./
 RUN go mod download
 
-COPY betterdesk-server/ .
+COPY sova-server/ .
 
 ARG BETTERDESK_PRODUCT_VERSION=dev
 
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X main.Version=${BETTERDESK_PRODUCT_VERSION}" \
     -tags "netgo osusergo" \
-    -o /betterdesk-server .
+    -o /sova-server .
 
 # ============= Stage 2: Build Node.js console =============
 FROM node:24-alpine AS node-builder
@@ -49,8 +49,8 @@ RUN npm ci --omit=dev
 
 # ============= Stage 3: Production runtime =============
 # Note: supervisord requires root to manage child processes with user= directive.
-# Both betterdesk-server and betterdesk-console run as non-root 'betterdesk' user
-# via supervisord configuration (user=betterdesk).
+# Both sova-server and sova-console run as non-root 'sova' user
+# via supervisord configuration (user=sova).
 FROM node:24-alpine
 
 LABEL maintainer="UNITRONIX"
@@ -75,15 +75,15 @@ RUN apk add --no-cache \
     su-exec \
     && mkdir -p /var/log/supervisor; }
 
-# Create betterdesk user and directories
-RUN addgroup -g 10001 -S betterdesk && \
-    adduser -u 10001 -S -G betterdesk betterdesk && \
-    mkdir -p /opt/rustdesk /app/data /var/log/betterdesk && \
-    chown -R betterdesk:betterdesk /opt/rustdesk /app/data /var/log/betterdesk
+# Create sova user and directories
+RUN addgroup -g 10001 -S sova && \
+    adduser -u 10001 -S -G sova sova && \
+    mkdir -p /opt/rustdesk /app/data /var/log/sova && \
+    chown -R sova:sova /opt/rustdesk /app/data /var/log/sova
 
 # ---- Go server binary ----
-COPY --from=go-builder /betterdesk-server /usr/local/bin/betterdesk-server
-RUN chmod +x /usr/local/bin/betterdesk-server
+COPY --from=go-builder /sova-server /usr/local/bin/sova-server
+RUN chmod +x /usr/local/bin/sova-server
 
 # ---- Node.js console ----
 WORKDIR /app
@@ -101,13 +101,13 @@ ENV BETTERDESK_UPDATE_MODE=image
 RUN printf '%s\n' "${BETTERDESK_COMMIT_SHA}" > /app/.image-commit
 
 # ---- Supervisord config ----
-COPY docker/supervisord.conf /etc/supervisor/conf.d/betterdesk.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/sova.conf
 
 # ---- Entrypoint ----
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/wait-panel-auth-db.sh /app/docker/wait-panel-auth-db.sh
-COPY docker/show-admin-credentials.sh /usr/local/bin/betterdesk-show-admin-credentials
-RUN chmod +x /entrypoint.sh /app/docker/wait-panel-auth-db.sh /usr/local/bin/betterdesk-show-admin-credentials
+COPY docker/show-admin-credentials.sh /usr/local/bin/sova-show-admin-credentials
+RUN chmod +x /entrypoint.sh /app/docker/wait-panel-auth-db.sh /usr/local/bin/sova-show-admin-credentials
 
 # Environment variables (defaults)
 ENV NODE_ENV=production
@@ -121,7 +121,7 @@ ENV RUSTDESK_PATH=/opt/rustdesk
 ENV DB_PATH=/opt/rustdesk/db_v2.sqlite3
 ENV PUB_KEY_PATH=/opt/rustdesk/id_ed25519.pub
 ENV API_KEY_PATH=/opt/rustdesk/.api_key
-ENV SERVER_BACKEND=betterdesk
+ENV SERVER_BACKEND=sova
 # API consolidated onto the Go server (21121); console proxies to it and does
 # not run its own client API listener.
 ENV API_ENABLED=false

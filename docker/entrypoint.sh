@@ -1,11 +1,11 @@
 #!/bin/sh
-# BetterDesk — All-in-One Container Entrypoint
+# SoVa Desk — All-in-One Container Entrypoint
 # Runs Go server + Node.js console via supervisord
 set -e
 
 echo "========================================"
-echo "  BetterDesk All-in-One Container"
-echo "  Version: ${BETTERDESK_IMAGE_VERSION:-3.5.4}"
+echo "  SoVa Desk All-in-One Container"
+echo "  Version: ${SOVA_IMAGE_VERSION:-3.5.4}"
 echo "========================================"
 echo ""
 echo "Components:"
@@ -39,27 +39,27 @@ if [ -n "${ADMIN_PASSWORD:-}" ]; then
 fi
 
 # Ensure data directories exist and have correct permissions
-mkdir -p /opt/rustdesk /app/data /var/log/betterdesk 2>/dev/null || true
-chown -R betterdesk:betterdesk /opt/rustdesk /app/data /var/log/betterdesk 2>/dev/null || true
+mkdir -p /opt/rustdesk /app/data /var/log/sova 2>/dev/null || true
+chown -R sova:sova /opt/rustdesk /app/data /var/log/sova 2>/dev/null || true
 
-# Write a file as betterdesk. Fresh named volumes inherit image ownership
+# Write a file as sova. Fresh named volumes inherit image ownership
 # (UID 10001); with compose cap_drop:ALL root has no CAP_DAC_OVERRIDE and
 # cannot create files there (Permission denied on .api_key, issue #299).
-write_as_betterdesk() {
-    # usage: write_as_betterdesk <path> <content>
+write_as_sova() {
+    # usage: write_as_sova <path> <content>
     _wad_path="$1"
     _wad_content="$2"
     if command -v su-exec >/dev/null 2>&1; then
-        printf '%s\n' "$_wad_content" | su-exec betterdesk sh -c "umask 077; cat > \"$_wad_path\""
+        printf '%s\n' "$_wad_content" | su-exec sova sh -c "umask 077; cat > \"$_wad_path\""
     else
-        printf '%s\n' "$_wad_content" | su -s /bin/sh betterdesk -c "umask 077; cat > \"$_wad_path\""
+        printf '%s\n' "$_wad_content" | su -s /bin/sh sova -c "umask 077; cat > \"$_wad_path\""
     fi
 }
-touch_as_betterdesk() {
+touch_as_sova() {
     if command -v su-exec >/dev/null 2>&1; then
-        su-exec betterdesk touch "$1"
+        su-exec sova touch "$1"
     else
-        su -s /bin/sh betterdesk -c "touch \"$1\""
+        su -s /bin/sh sova -c "touch \"$1\""
     fi
 }
 
@@ -71,10 +71,10 @@ if [ -z "${API_KEY:-}" ] && [ ! -f "$API_KEY_FILE" ]; then
     else
         API_KEY=$(cat /dev/urandom | head -c 32 | od -An -tx1 | tr -d ' \n')
     fi
-    write_as_betterdesk "$API_KEY_FILE" "$API_KEY"
+    write_as_sova "$API_KEY_FILE" "$API_KEY"
     echo "Auto-generated API key → $API_KEY_FILE"
 elif [ -n "${API_KEY:-}" ] && [ ! -f "$API_KEY_FILE" ]; then
-    write_as_betterdesk "$API_KEY_FILE" "$API_KEY"
+    write_as_sova "$API_KEY_FILE" "$API_KEY"
     echo "API key from env → $API_KEY_FILE"
 fi
 
@@ -93,7 +93,7 @@ if [ -z "${ENROLLMENT_MODE:-}" ]; then
             export ENROLLMENT_MODE="managed"
             echo "Enrollment:   managed (fresh install — new devices need approval)"
         fi
-        touch_as_betterdesk "$ENROLLMENT_SENTINEL" 2>/dev/null || true
+        touch_as_sova "$ENROLLMENT_SENTINEL" 2>/dev/null || true
     fi
 fi
 # Always export so supervisord's %(ENV_ENROLLMENT_MODE)s interpolation resolves.
@@ -101,9 +101,9 @@ fi
 export ENROLLMENT_MODE="${ENROLLMENT_MODE:-}"
 
 # Verify write access — SQLite WAL mode requires writable directory (Issue #78)
-if ! touch_as_betterdesk /opt/rustdesk/.write_test 2>/dev/null; then
+if ! touch_as_sova /opt/rustdesk/.write_test 2>/dev/null; then
     echo ""
-    echo "ERROR: /opt/rustdesk is NOT writable by the betterdesk user (UID 10001)."
+    echo "ERROR: /opt/rustdesk is NOT writable by the sova user (UID 10001)."
     echo "  SQLite WAL mode requires write access to the database directory."
     echo "  If using bind mounts, run: chown -R 10001:10001 /path/to/your/data"
     echo "  Or use Docker named volumes instead of bind mounts."
@@ -113,7 +113,7 @@ rm -f /opt/rustdesk/.write_test 2>/dev/null || true
 # Fix private key permissions (volume mounts may preserve wrong UID/mode)
 if [ -f /opt/rustdesk/id_ed25519 ]; then
     chmod 600 /opt/rustdesk/id_ed25519 2>/dev/null || true
-    chown betterdesk:betterdesk /opt/rustdesk/id_ed25519 2>/dev/null || true
+    chown sova:sova /opt/rustdesk/id_ed25519 2>/dev/null || true
 fi
 
 # BD-2026-007: Warn about weak default secrets
@@ -225,4 +225,4 @@ echo "========================================"
 echo ""
 
 # Start supervisord (manages both processes)
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/betterdesk.conf
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/sova.conf

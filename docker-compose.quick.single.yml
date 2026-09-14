@@ -20,7 +20,7 @@
 # Web Console: http://localhost:5000
 # RustDesk client API: http://localhost:21121 (Go server — all-in-one default port)
 # Default credentials are written to the shared credentials file:
-#   docker compose exec betterdesk betterdesk-show-admin-credentials
+#   docker compose exec sova-desk sova-show-admin-credentials
 #
 # Legacy two-container layout (split images): use docker-compose.quick.yml or
 #   curl .../install.sh | sudo bash -s -- --split
@@ -34,10 +34,10 @@
 # =============================================================================
 
 services:
-  betterdesk:
-    image: ghcr.io/unitronix/betterdesk:${BETTERDESK_IMAGE_TAG:-3.5.4}
-    container_name: betterdesk
-    hostname: betterdesk
+  sova-desk:
+    image: ghcr.io/koreshkof/sova-desk:${BETTERDESK_IMAGE_TAG:-3.5.4}
+    container_name: sova-desk
+    hostname: sova-desk
     ports:
       - "5000:5000"             # Web Console (LAN)
       - "21115:21115"           # NAT type test
@@ -48,7 +48,7 @@ services:
       - "21119:21119"           # WebSocket Relay
       - "21121:21121"           # HTTP API (RustDesk client + REST, WAN-facing)
     volumes:
-      - betterdesk-data:/opt/rustdesk
+      - sova-data:/opt/rustdesk
       - console-data:/app/data
     environment:
       - NODE_ENV=production
@@ -57,7 +57,7 @@ services:
       - API_HOST=0.0.0.0
       - API_ENABLED=false
       - ENCRYPTED_ONLY=1
-      - SERVER_BACKEND=betterdesk
+      - SERVER_BACKEND=sova
       - HBBS_API_URL=http://127.0.0.1:21121/api
       - BETTERDESK_API_URL=http://127.0.0.1:21121/api
       - RUSTDESK_PATH=/opt/rustdesk
@@ -100,7 +100,7 @@ services:
       - DEFAULT_ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - TZ=${TZ:-UTC}
     networks:
-      - betterdesk-net
+      - sova-net
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -119,11 +119,11 @@ services:
       start_period: 45s
 
 networks:
-  betterdesk-net:
+  sova-net:
     driver: bridge
 
 volumes:
-  betterdesk-data:
-    name: betterdesk-data
+  sova-data:
+    name: sova-data
   console-data:
-    name: betterdesk-console-data
+    name: sova-console-data
