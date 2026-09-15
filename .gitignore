@@ -233,3 +233,6 @@ k-server
 docs/security/PROJECT_SECURITY_ANALYSIS_2026-05-19.md
 *.bak
 *.bak[0-9]
+*.old
+*.bak
+*.bak[0-9]
