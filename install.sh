@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # =============================================================================
-# BetterDesk — one-line installer (Linux)
+# SoVa Desk — one-line installer (Linux)
 #
 # Docker (default — official all-in-one GHCR image, fully automated):
-#   curl -fsSL https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/install.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/koreshkof/SoVaDesk/main/install.sh | sudo bash
 #
 # Docker legacy (two-container split images):
 #   curl -fsSL .../install.sh | sudo bash -s -- --split
 #
-# Native (git clone + betterdesk.sh --auto):
-#   curl -fsSL https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/install.sh | sudo bash -s -- --native
+# Native (git clone + sova.sh --auto):
+#   curl -fsSL https://raw.githubusercontent.com/koreshkof/SoVaDesk/main/install.sh | sudo bash -s -- --native
 #
 # Options (pass after "bash -s --"):
 #   --docker | --native          Installation mode (default: docker)
 #   --split                      Legacy two-container layout (server + console images)
-#   --install-dir PATH             Install directory (default: /opt/betterdesk)
+#   --install-dir PATH             Install directory (default: /srv/sova-desk)
 #   --version TAG                  Docker image tag / release baseline (default: 3.5.4)
 #   --branch BRANCH                Git branch for native install (default: main)
 #   --relay-mode auto|local|public Relay auto-detection strategy
@@ -26,22 +26,22 @@
 #   --diagnose                     Read-only diagnostics for Docker deployments
 #   --repair-permissions           Only repair Docker data/volume permissions
 #   --purge                        With --uninstall: also remove Docker volumes
-#   --uninstall                    Remove BetterDesk Docker installation
+#   --uninstall                    Remove SoVa Desk Docker installation
 #   --help                         Show usage
 #
 # Environment overrides (same names as flags where applicable):
-#   BETTERDESK_REPO, BETTERDESK_BRANCH, BETTERDESK_VERSION, INSTALL_DIR,
-#   RELAY_MODE, RELAY_SERVERS, ADMIN_PASSWORD, BETTERDESK_RAW_BASE
+#   SOVA_REPO, SOVA_BRANCH, SOVA_VERSION, INSTALL_DIR,
+#   RELAY_MODE, RELAY_SERVERS, ADMIN_PASSWORD, SOVA_RAW_BASE
 # =============================================================================
 
 set -euo pipefail
 
 VERSION="1.0.0"
-BETTERDESK_REPO="${BETTERDESK_REPO:-UNITRONIX/BetterDesk}"
-BETTERDESK_BRANCH="${BETTERDESK_BRANCH:-main}"
-BETTERDESK_VERSION="${BETTERDESK_VERSION:-3.5.4}"
-BETTERDESK_RAW_BASE="${BETTERDESK_RAW_BASE:-https://raw.githubusercontent.com/${BETTERDESK_REPO}/${BETTERDESK_BRANCH}}"
-INSTALL_DIR="${INSTALL_DIR:-/opt/betterdesk}"
+SOVA_REPO="${SOVA_REPO:-koreshkof/SoVaDesk}"
+SOVA_BRANCH="${SOVA_BRANCH:-main}"
+SOVA_VERSION="${SOVA_VERSION:-3.5.4}"
+SOVA_RAW_BASE="${SOVA_RAW_BASE:-https://raw.githubusercontent.com/${SOVA_REPO}/${SOVA_BRANCH}}"
+INSTALL_DIR="${INSTALL_DIR:-/srv/sova-desk}"
 INSTALL_MODE="docker"
 DOCKER_LAYOUT="single"
 RELAY_MODE="${RELAY_MODE:-auto}"
@@ -91,8 +91,8 @@ while [ $# -gt 0 ]; do
         --split) DOCKER_LAYOUT="split"; shift ;;
         --native) INSTALL_MODE="native"; shift ;;
         --install-dir) INSTALL_DIR="$2"; shift 2 ;;
-        --version) BETTERDESK_VERSION="$2"; shift 2 ;;
-        --branch) BETTERDESK_BRANCH="$2"; BETTERDESK_RAW_BASE="https://raw.githubusercontent.com/${BETTERDESK_REPO}/${BETTERDESK_BRANCH}"; shift 2 ;;
+        --version) SOVA_VERSION="$2"; shift 2 ;;
+        --branch) SOVA_BRANCH="$2"; SOVA_RAW_BASE="https://raw.githubusercontent.com/${SOVA_REPO}/${SOVA_BRANCH}"; shift 2 ;;
         --relay-mode) RELAY_MODE="$2"; shift 2 ;;
         --relay-servers) RELAY_SERVERS="$2"; shift 2 ;;
         --admin-password) ADMIN_PASSWORD="$2"; shift 2 ;;
@@ -202,11 +202,11 @@ validate_compose_quick() {
     local layout="${2:-single}"
     grep -q 'services:' "$file" || die "Invalid compose file (missing services:)"
     if [ "$layout" = "split" ]; then
-        grep -q 'ghcr.io/unitronix/betterdesk-server' "$file" || die "Invalid compose file (unexpected content)"
-        grep -q 'ghcr.io/unitronix/betterdesk-console' "$file" || die "Invalid compose file (unexpected content)"
+        grep -q 'ghcr.io/koreshkof/sova-server' "$file" || die "Invalid compose file (unexpected content)"
+        grep -q 'ghcr.io/koreshkof/sova-console' "$file" || die "Invalid compose file (unexpected content)"
     else
-        grep -q 'ghcr.io/unitronix/betterdesk:' "$file" || die "Invalid compose file (unexpected content)"
-        grep -q 'BETTERDESK_DOCKER_LAYOUT=single' "$file" || die "Invalid compose file (missing single layout marker)"
+        grep -q 'ghcr.io/koreshkof/sova-desk:' "$file" || die "Invalid compose file (unexpected content)"
+        grep -q 'SOVA_DOCKER_LAYOUT=single' "$file" || die "Invalid compose file (missing single layout marker)"
     fi
 }
 
@@ -284,10 +284,10 @@ configure_firewall() {
     if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -qi "active"; then
         for port in $docker_ports; do
             if [ "$port" = "21116" ]; then
-                ufw allow 21116/tcp comment "BetterDesk signal TCP" >/dev/null 2>&1 && created=$((created + 1)) || true
-                ufw allow 21116/udp comment "BetterDesk signal UDP" >/dev/null 2>&1 && created=$((created + 1)) || true
+                ufw allow 21116/tcp comment "SoVa Desk signal TCP" >/dev/null 2>&1 && created=$((created + 1)) || true
+                ufw allow 21116/udp comment "SoVa Desk signal UDP" >/dev/null 2>&1 && created=$((created + 1)) || true
             elif ! ufw status 2>/dev/null | grep -qE "^${port}[/ ]"; then
-                ufw allow "${port}/tcp" comment "BetterDesk port ${port}" >/dev/null 2>&1 && created=$((created + 1)) || true
+                ufw allow "${port}/tcp" comment "SoVa Desk port ${port}" >/dev/null 2>&1 && created=$((created + 1)) || true
             fi
         done
         ufw reload >/dev/null 2>&1 || true
@@ -331,19 +331,19 @@ wait_for_http() {
 }
 
 fetch_admin_credentials() {
-    # Prefer helper (#195); fall back to cat as betterdesk when image lacks the binary (#299).
+    # Prefer helper (#195); fall back to cat as sova when image lacks the binary (#299).
     local service="$1"
     local compose_file="$INSTALL_DIR/docker/docker-compose.yml"
     local out=""
 
     out=$("${COMPOSE_CMD[@]}" -f "$compose_file" exec -T "$service" \
-        betterdesk-show-admin-credentials 2>/dev/null || true)
+        sova-show-admin-credentials 2>/dev/null || true)
     if [ -n "$out" ]; then
         printf '%s\n' "$out"
         return 0
     fi
 
-    out=$("${COMPOSE_CMD[@]}" -f "$compose_file" exec -T -u betterdesk "$service" \
+    out=$("${COMPOSE_CMD[@]}" -f "$compose_file" exec -T -u sova "$service" \
         sh -c 'cat /opt/rustdesk/.admin_credentials 2>/dev/null || cat /app/data/.admin_credentials 2>/dev/null' \
         2>/dev/null || true)
     if [ -n "$out" ]; then
@@ -359,7 +359,7 @@ print_docker_summary() {
     local creds=""
     local pubkey=""
     local api_port="21121"
-    local exec_service="betterdesk"
+    local exec_service="sova-desk"
 
     if [ "$DOCKER_LAYOUT" = "split" ]; then
         api_port="21114"
@@ -368,21 +368,21 @@ print_docker_summary() {
         pubkey=$("${COMPOSE_CMD[@]}" -f "$INSTALL_DIR/docker/docker-compose.yml" exec -T server \
             sh -c 'cat /opt/rustdesk/id_ed25519.pub 2>/dev/null' 2>/dev/null || true)
     else
-        creds=$(fetch_admin_credentials betterdesk || true)
-        pubkey=$("${COMPOSE_CMD[@]}" -f "$INSTALL_DIR/docker/docker-compose.yml" exec -T betterdesk \
+        creds=$(fetch_admin_credentials sova-desk || true)
+        pubkey=$("${COMPOSE_CMD[@]}" -f "$INSTALL_DIR/docker/docker-compose.yml" exec -T sova-desk \
             sh -c 'cat /opt/rustdesk/id_ed25519.pub 2>/dev/null' 2>/dev/null || true)
     fi
 
     echo ""
     echo -e "${C_CYAN}╔══════════════════════════════════════════════════════════════╗${C_RESET}"
-    echo -e "${C_CYAN}║${C_RESET}  ${C_BOLD}BetterDesk Docker installation complete${C_RESET}                     ${C_CYAN}║${C_RESET}"
+    echo -e "${C_CYAN}║${C_RESET}  ${C_BOLD}SoVa Desk Docker installation complete${C_RESET}                     ${C_CYAN}║${C_RESET}"
     echo -e "${C_CYAN}╠══════════════════════════════════════════════════════════════╣${C_RESET}"
     echo -e "${C_CYAN}║${C_RESET}  Layout:       ${C_WHITE}${DOCKER_LAYOUT} container(s)${C_RESET}"
     echo -e "${C_CYAN}║${C_RESET}  Web panel:    ${C_WHITE}http://${host_ip}:5000${C_RESET}"
     echo -e "${C_CYAN}║${C_RESET}  API health:   ${C_WHITE}http://${host_ip}:${api_port}/api/health${C_RESET}"
     echo -e "${C_CYAN}║${C_RESET}  Relay:        ${C_WHITE}${relay}${C_RESET}"
     echo -e "${C_CYAN}║${C_RESET}  Install dir:  ${C_WHITE}${INSTALL_DIR}/docker${C_RESET}"
-    echo -e "${C_CYAN}║${C_RESET}  Image tag:    ${C_WHITE}${BETTERDESK_VERSION}${C_RESET}"
+    echo -e "${C_CYAN}║${C_RESET}  Image tag:    ${C_WHITE}${SOVA_VERSION}${C_RESET}"
     if [ -n "$pubkey" ]; then
         echo -e "${C_CYAN}║${C_RESET}  Public key:   ${C_WHITE}${pubkey:0:32}...${C_RESET}"
     fi
@@ -398,7 +398,7 @@ print_docker_summary() {
             [ -n "$line" ] && echo -e "${C_CYAN}║${C_RESET}    ${C_WHITE}${line}${C_RESET}"
         done <<< "$creds"
     else
-        echo -e "${C_CYAN}║${C_RESET}  Admin creds:   ${C_DIM}docker compose -f ${INSTALL_DIR}/docker/docker-compose.yml exec ${exec_service} betterdesk-show-admin-credentials${C_RESET}"
+        echo -e "${C_CYAN}║${C_RESET}  Admin creds:   ${C_DIM}docker compose -f ${INSTALL_DIR}/docker/docker-compose.yml exec ${exec_service} sova-show-admin-credentials${C_RESET}"
     fi
     echo -e "${C_CYAN}╚══════════════════════════════════════════════════════════════╝${C_RESET}"
     echo ""
@@ -421,7 +421,7 @@ install_docker_mode() {
         api_health_url="http://127.0.0.1:21121/api/health"
     fi
 
-    log "BetterDesk Docker installer v${VERSION} (${layout_label}, images: ${BETTERDESK_VERSION})"
+    log "SoVa Desk Docker installer v${VERSION} (${layout_label}, images: ${SOVA_VERSION})"
 
     if ! check_docker; then
         if [ "$SKIP_DOCKER_INSTALL" = true ]; then
@@ -438,15 +438,15 @@ install_docker_mode() {
     log "Downloading ${compose_src}..."
     tmp_compose=$(mktemp)
     trap 'rm -f "$tmp_compose"' RETURN
-    fetch_url_to_file "${BETTERDESK_RAW_BASE}/${compose_src}" "$tmp_compose" 1024 131072
+    fetch_url_to_file "${SOVA_RAW_BASE}/${compose_src}" "$tmp_compose" 1024 131072
     validate_compose_quick "$tmp_compose" "$DOCKER_LAYOUT"
     install -m 0644 "$tmp_compose" "$compose_file"
 
     log "Writing ${env_file}..."
     cat > "$env_file" <<EOF
-# Generated by BetterDesk install.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)
-BETTERDESK_IMAGE_TAG=${BETTERDESK_VERSION}
-BETTERDESK_DOCKER_LAYOUT=${DOCKER_LAYOUT}
+# Generated by SoVa Desk install.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)
+SOVA_IMAGE_TAG=${SOVA_VERSION}
+SOVA_DOCKER_LAYOUT=${DOCKER_LAYOUT}
 RELAY_SERVERS=${relay}
 EOF
     if [ -n "$ADMIN_PASSWORD" ]; then
@@ -463,7 +463,7 @@ EOF
     configure_firewall
 
     log "Waiting for services..."
-    wait_for_http "$api_health_url" "BetterDesk API" 90 || true
+    wait_for_http "$api_health_url" "SoVa Desk API" 90 || true
     wait_for_http "http://127.0.0.1:5000/login" "Web console" 60 || true
 
     print_docker_summary "$relay"
@@ -471,8 +471,8 @@ EOF
 
 rescue_docker_mode() {
     local rescue_dir="${INSTALL_DIR}/rescue"
-    local rescue_script="${rescue_dir}/betterdesk-docker.sh"
-    local rescue_url="${BETTERDESK_RAW_BASE}/betterdesk-docker.sh"
+    local rescue_script="${rescue_dir}/sova-docker.sh"
+    local rescue_url="${SOVA_RAW_BASE}/sova-docker.sh"
     local rescue_flag
 
     case "$RESCUE_ACTION" in
@@ -481,7 +481,7 @@ rescue_docker_mode() {
         rescue|*) rescue_flag="--rescue" ;;
     esac
 
-    log "Preparing BetterDesk Docker rescue toolkit..."
+    log "Preparing SoVa Desk Docker rescue toolkit..."
     require_command curl
     if [ "$RESCUE_ACTION" != "diagnose" ]; then
         check_docker || die "Docker is not available or the daemon is not running"
@@ -510,7 +510,7 @@ uninstall_docker_mode() {
         die "No Docker installation found at ${compose_dir}"
     fi
 
-    log "Stopping BetterDesk Docker stack..."
+    log "Stopping SoVa Desk Docker stack..."
     if [ "$DO_PURGE" = true ]; then
         (cd "$compose_dir" && "${COMPOSE_CMD[@]}" --env-file .env down -v)
         ok "Containers and volumes removed"
@@ -526,31 +526,31 @@ install_native_mode() {
     local repo_dir="${INSTALL_DIR}/source"
     local relay
 
-    log "BetterDesk native installer v${VERSION}"
+    log "SoVa Desk native installer v${VERSION}"
 
     require_command git
     relay=$(resolve_relay_address)
 
     if [ -d "$repo_dir/.git" ]; then
         log "Updating existing clone in ${repo_dir}..."
-        git -C "$repo_dir" fetch --depth 1 origin "$BETTERDESK_BRANCH"
-        git -C "$repo_dir" checkout "$BETTERDESK_BRANCH"
-        git -C "$repo_dir" pull --ff-only origin "$BETTERDESK_BRANCH" || true
+        git -C "$repo_dir" fetch --depth 1 origin "$SOVA_BRANCH"
+        git -C "$repo_dir" checkout "$SOVA_BRANCH"
+        git -C "$repo_dir" pull --ff-only origin "$SOVA_BRANCH" || true
     else
-        log "Cloning ${BETTERDESK_REPO} (${BETTERDESK_BRANCH})..."
+        log "Cloning ${SOVA_REPO} (${SOVA_BRANCH})..."
         rm -rf "$repo_dir"
-        git clone --depth 1 --branch "$BETTERDESK_BRANCH" \
-            "https://github.com/${BETTERDESK_REPO}.git" "$repo_dir"
+        git clone --depth 1 --branch "$SOVA_BRANCH" \
+            "https://github.com/${SOVA_REPO}.git" "$repo_dir"
     fi
 
-    chmod +x "${repo_dir}/betterdesk.sh"
+    chmod +x "${repo_dir}/sova.sh"
 
-    log "Running betterdesk.sh --auto..."
+    log "Running sova.sh --auto..."
     export RELAY_MODE RELAY_SERVERS="$relay"
     if [ -n "$ADMIN_PASSWORD" ]; then
         export ADMIN_PASSWORD
     fi
-    (cd "$repo_dir" && ./betterdesk.sh --auto --relay-servers "$relay")
+    (cd "$repo_dir" && ./sova.sh --auto --relay-servers "$relay")
 
     ok "Native installation finished. See ${repo_dir} for logs and credentials."
 }
@@ -558,10 +558,10 @@ install_native_mode() {
 rescue_native_mode() {
     local repo_dir="${INSTALL_DIR}/source"
 
-    warn "Native rescue is handled by betterdesk.sh on the installed host."
-    if [ -x "$repo_dir/betterdesk.sh" ]; then
+    warn "Native rescue is handled by sova.sh on the installed host."
+    if [ -x "$repo_dir/sova.sh" ]; then
         echo "Run the interactive native repair toolkit with:"
-        echo "  sudo ${repo_dir}/betterdesk.sh"
+        echo "  sudo ${repo_dir}/sova.sh"
         echo "Then choose: Repair Installation or Diagnostics."
         return 0
     fi
@@ -573,7 +573,7 @@ rescue_native_mode() {
 
 main() {
     echo ""
-    echo -e "${C_BOLD}BetterDesk installer v${VERSION}${C_RESET}"
+    echo -e "${C_BOLD}SoVa Desk installer v${VERSION}${C_RESET}"
     echo ""
 
     if [ "$DO_UNINSTALL" = true ]; then
