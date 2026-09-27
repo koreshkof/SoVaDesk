@@ -1,7 +1,7 @@
 #!/bin/bash
 #===============================================================================
 #
-#   BetterDesk Console Manager v3.5.4
+#   SoVa Desk Console Manager v3.5.4
 #   All-in-One Interactive Tool for Linux
 #
 #   Features:
@@ -27,9 +27,9 @@
 #     - CDAP (Custom Device API Protocol) support
 #
 #   Usage: 
-#     Interactive: sudo ./betterdesk.sh
-#     Auto mode:   sudo ./betterdesk.sh --auto
-#     PostgreSQL:  sudo ./betterdesk.sh --auto --postgresql
+#     Interactive: sudo ./sova.sh
+#     Auto mode:   sudo ./sova.sh --auto
+#     PostgreSQL:  sudo ./sova.sh --auto --postgresql
 #
 #===============================================================================
 
@@ -38,10 +38,10 @@ set -e
 # Version
 VERSION="3.5.4"
 # Bump when installer control-flow changes must apply mid-session after Update (#219).
-BETTERDESK_SH_REVISION="20260725-console-start-306"
+SOVA_SH_REVISION="20260725-console-start-306"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Preserve argv before shift — used to re-exec after installer self-update (#219).
-BETTERDESK_ORIG_ARGV=("$@")
+SOVA_ORIG_ARGV=("$@")
 
 # Auto mode flag
 AUTO_MODE=false
@@ -111,9 +111,9 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            echo "BetterDesk Console Manager v$VERSION"
+            echo "SoVa Desk Console Manager v$VERSION"
             echo ""
-            echo "Usage: sudo ./betterdesk.sh [OPTIONS]"
+            echo "Usage: sudo ./sova.sh [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --auto, -a       Run in automatic mode (non-interactive)"
@@ -130,9 +130,9 @@ while [[ $# -gt 0 ]]; do
             echo "Environment variables:"
             echo "  USE_POSTGRESQL=true     Use PostgreSQL"
             echo "  POSTGRESQL_URI=...      PostgreSQL connection URI"
-            echo "  POSTGRESQL_USER=...     PostgreSQL username (default: betterdesk)"
+            echo "  POSTGRESQL_USER=...     PostgreSQL username (default: sova)"
             echo "  POSTGRESQL_PASS=...     PostgreSQL password (auto-generated if empty)"
-            echo "  POSTGRESQL_DB=...       PostgreSQL database (default: betterdesk)"
+            echo "  POSTGRESQL_DB=...       PostgreSQL database (default: sova)"
             echo "  POSTGRESQL_HOST=...     PostgreSQL host (default: localhost)"
             echo "  POSTGRESQL_PORT=...     PostgreSQL port (default: 5432)"
             echo "  RELAY_MODE=auto|local|public  Relay IP selection mode (default: auto)"
@@ -149,7 +149,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Go server source directory
-GO_SERVER_SOURCE="$SCRIPT_DIR/betterdesk-server"
+GO_SERVER_SOURCE="$SCRIPT_DIR/sova-server"
 
 # Minimum Go version required for compilation
 GO_MIN_VERSION="1.25"
@@ -172,15 +172,15 @@ STORE_ADMIN_CREDENTIALS="${STORE_ADMIN_CREDENTIALS:-false}"
 # Database configuration
 USE_POSTGRESQL="${USE_POSTGRESQL:-false}"  # true = PostgreSQL, false = SQLite
 POSTGRESQL_URI="${POSTGRESQL_URI:-}"       # postgres://user:pass@host:5432/dbname
-POSTGRESQL_USER="${POSTGRESQL_USER:-betterdesk}"
+POSTGRESQL_USER="${POSTGRESQL_USER:-sova}"
 POSTGRESQL_PASS="${POSTGRESQL_PASS:-}"
-POSTGRESQL_DB="${POSTGRESQL_DB:-betterdesk}"
+POSTGRESQL_DB="${POSTGRESQL_DB:-sova}"
 POSTGRESQL_HOST="${POSTGRESQL_HOST:-localhost}"
 POSTGRESQL_PORT="${POSTGRESQL_PORT:-5432}"
 
 # Common installation paths to search
 COMMON_RUSTDESK_PATHS=(
-    "/opt/betterdesk"
+    "/srv/sova-desk"
     "/opt/rustdesk"
     "/usr/local/rustdesk"
     "/var/lib/rustdesk"
@@ -189,10 +189,10 @@ COMMON_RUSTDESK_PATHS=(
 )
 
 COMMON_CONSOLE_PATHS=(
-    "/opt/BetterDeskConsole"
-    "/opt/betterdesk"
-    "/var/lib/betterdesk"
-    "$HOME/BetterDeskConsole"
+    "/srv/sova-desk/web-console"
+    "/srv/sova-desk"
+    "/var/lib/sova"
+    "$HOME/SoVa DeskConsole"
 )
 
 # Colors
@@ -208,7 +208,7 @@ BOLD='\033[1m'
 DIM='\033[2m'
 
 # Logging
-LOG_FILE="/tmp/betterdesk_$(date +%Y%m%d_%H%M%S).log"
+LOG_FILE="/tmp/sova_$(date +%Y%m%d_%H%M%S).log"
 
 #===============================================================================
 # Helper Functions
@@ -269,7 +269,7 @@ TUI_RESULT=""
 
 # Detect whether the modern arrow-key interface can be used.
 tui_available() {
-    [ "${BETTERDESK_CLASSIC_MENU:-0}" = "1" ] && return 1
+    [ "${SOVA_CLASSIC_MENU:-0}" = "1" ] && return 1
     [ -t 0 ] && [ -t 1 ] || return 1
     return 0
 }
@@ -559,7 +559,7 @@ wait_for_service_stop() {
 }
 
 # Kill any stale processes that might be holding files/ports
-# Free BetterDesk ports when systemd stop left orphan listeners (#219).
+# Free SoVa Desk ports when systemd stop left orphan listeners (#219).
 kill_processes_holding_ports() {
     local port pids
     for port in 21116 21117 5000 5443; do
@@ -651,7 +651,7 @@ _hint_panel_privileged_port_mismatch() {
 
     if [ "$expected_port" = "443" ] && _tcp_port_is_listening 5443; then
         print_info "  Panel is listening on :5443 instead of configured :443"
-        print_info "  → Run Repair → Repair permissions (adds CAP_NET_BIND_SERVICE), then restart betterdesk-console"
+        print_info "  → Run Repair → Repair permissions (adds CAP_NET_BIND_SERVICE), then restart sova-console"
         print_info "  → Or set HTTPS_PORT=5443 and use a reverse proxy on :443 (docs/setup/REVERSE_PROXY.md)"
         return 0
     fi
@@ -685,7 +685,7 @@ verify_service_health() {
         done
         
         print_error "Service $service_name is running but not listening on port $expected_port"
-        if [ "$service_name" = "betterdesk-console" ]; then
+        if [ "$service_name" = "sova-console" ]; then
             _hint_panel_privileged_port_mismatch "$expected_port"
         fi
         show_service_logs "$service_name" 20
@@ -708,14 +708,14 @@ show_service_logs() {
     echo ""
 }
 
-# Gracefully stop all BetterDesk services with proper cleanup
+# Gracefully stop all SoVa Desk services with proper cleanup
 graceful_stop_services() {
     print_step "Stopping services gracefully..."
     
     # New Go services (primary)
-    local services=("betterdesk-console" "betterdesk-server")
+    local services=("sova-console" "sova-server")
     # Legacy services (for migration)
-    local legacy_services=("betterdesk" "rustdesksignal" "rustdeskrelay" "betterdesk-api" "betterdesk-go")
+    local legacy_services=("sova" "rustdesksignal" "rustdeskrelay" "sova-api" "sova-go")
     
     # Stop current services
     for service in "${services[@]}"; do
@@ -739,7 +739,7 @@ graceful_stop_services() {
     done
     
     # Kill any stale processes (Go and legacy Rust)
-    kill_stale_processes "betterdesk-server"
+    kill_stale_processes "sova-server"
     kill_stale_processes "hbbs"
     kill_stale_processes "hbbr"
     kill_processes_holding_ports
@@ -754,7 +754,7 @@ graceful_stop_services() {
 read_effective_console_setting() {
     local key="$1"
     local default="${2:-}"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local env_file="${CONSOLE_PATH}/.env"
     local val=""
 
@@ -770,9 +770,9 @@ read_effective_console_setting() {
     echo "$val"
 }
 
-# Keep betterdesk-console.service Environment=PORT/HTTPS_PORT aligned with .env (#219).
+# Keep sova-console.service Environment=PORT/HTTPS_PORT aligned with .env (#219).
 _sync_console_panel_ports_to_systemd() {
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local env_file="${CONSOLE_PATH}/.env"
     local http_port https_port changed=0
 
@@ -848,7 +848,7 @@ infer_tls_mode_from_cert() {
 # Resolve Let's Encrypt live/ dir from .env, paths, symlinks, LE_CERT_DOMAIN, or cert SAN (#219).
 resolve_le_cert_live_dir() {
     local env_file="${1:-${CONSOLE_PATH}/.env}"
-    local cert_hint="${2:-$RUSTDESK_PATH/ssl/betterdesk.crt}"
+    local cert_hint="${2:-$RUSTDESK_PATH/ssl/sova.crt}"
     local ssl_key_env ssl_cert_env le_live_dir le_domain dns_name
 
     le_live_dir=$(grep -m1 '^LE_CERT_LIVE_DIR=' "$env_file" 2>/dev/null | cut -d= -f2- || true)
@@ -895,7 +895,7 @@ _safe_cp_tls_file() {
             rm -f "$dest"
         fi
     fi
-    tmp="${dest}.betterdesk.$$.tmp"
+    tmp="${dest}.sova.$$.tmp"
     cp -L "$src" "$tmp" || return 1
     mv -f "$tmp" "$dest" || { rm -f "$tmp"; return 1; }
     return 0
@@ -903,7 +903,7 @@ _safe_cp_tls_file() {
 
 # Ensure Go signal/relay/API ports are not overridden by shared .env (#219).
 ensure_go_server_signal_ports() {
-    local go_svc_file="/etc/systemd/system/betterdesk-server.service"
+    local go_svc_file="/etc/systemd/system/sova-server.service"
     local changed=0
     local go_api_port="${GO_API_PORT:-21114}"
 
@@ -934,13 +934,13 @@ ensure_go_server_signal_ports() {
 }
 
 # Copy TLS material into $RUSTDESK_PATH/ssl/ as real files (not symlinks) so the
-# betterdesk console user can read them. LE live dirs are root-only (#219).
+# sova console user can read them. LE live dirs are root-only (#219).
 deploy_ssl_material_to_rustdesk_dir() {
     local cert_src="$1"
     local key_src="$2"
     local le_live_dir="${3:-}"
     local ssl_dir="$RUSTDESK_PATH/ssl"
-    local svc_user="betterdesk"
+    local svc_user="sova"
     local env_file="${CONSOLE_PATH}/.env"
 
     if [ ! -f "$cert_src" ] || [ ! -f "$key_src" ]; then
@@ -949,19 +949,19 @@ deploy_ssl_material_to_rustdesk_dir() {
     fi
 
     mkdir -p "$ssl_dir"
-    if ! _safe_cp_tls_file "$cert_src" "$ssl_dir/betterdesk.crt"; then
-        print_error "Failed to deploy certificate to $ssl_dir/betterdesk.crt"
+    if ! _safe_cp_tls_file "$cert_src" "$ssl_dir/sova.crt"; then
+        print_error "Failed to deploy certificate to $ssl_dir/sova.crt"
         return 1
     fi
-    if ! _safe_cp_tls_file "$key_src" "$ssl_dir/betterdesk.key"; then
-        print_error "Failed to deploy private key to $ssl_dir/betterdesk.key"
+    if ! _safe_cp_tls_file "$key_src" "$ssl_dir/sova.key"; then
+        print_error "Failed to deploy private key to $ssl_dir/sova.key"
         return 1
     fi
 
     if id "$svc_user" &>/dev/null; then
-        chown root:"$svc_user" "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" 2>/dev/null || true
+        chown root:"$svc_user" "$ssl_dir/sova.crt" "$ssl_dir/sova.key" 2>/dev/null || true
     fi
-    chmod 640 "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" 2>/dev/null || true
+    chmod 640 "$ssl_dir/sova.crt" "$ssl_dir/sova.key" 2>/dev/null || true
 
     if [ -n "$le_live_dir" ]; then
         _upsert_env_line "$env_file" LE_CERT_LIVE_DIR "$le_live_dir"
@@ -972,11 +972,11 @@ deploy_ssl_material_to_rustdesk_dir() {
     return 0
 }
 
-# certbot deploy hook: re-copy renewed LE certs then restart BetterDesk services.
+# certbot deploy hook: re-copy renewed LE certs then restart SoVa Desk services.
 install_le_certbot_renew_hook() {
     local hook_dir="/etc/letsencrypt/renewal-hooks/deploy"
-    local hook="$hook_dir/betterdesk-reload.sh"
-    local conf="$hook_dir/betterdesk-reload.conf"
+    local hook="$hook_dir/sova-reload.sh"
+    local conf="$hook_dir/sova-reload.conf"
     mkdir -p "$hook_dir"
 
     cat > "$conf" <<EOF
@@ -988,26 +988,26 @@ EOF
     cat > "$hook" <<'HOOK'
 #!/bin/bash
 set -euo pipefail
-CONF="/etc/letsencrypt/renewal-hooks/deploy/betterdesk-reload.conf"
+CONF="/etc/letsencrypt/renewal-hooks/deploy/sova-reload.conf"
 [ -f "$CONF" ] && . "$CONF"
 RUSTDESK_PATH="${RUSTDESK_PATH:-/opt/rustdesk}"
-CONSOLE_PATH="${CONSOLE_PATH:-/opt/betterdesk}"
+CONSOLE_PATH="${CONSOLE_PATH:-/srv/sova-desk}"
 ENV_FILE="$CONSOLE_PATH/.env"
 SSL_DIR="$RUSTDESK_PATH/ssl"
-SVC_USER="betterdesk"
+SVC_USER="sova"
 
 le_live_dir=""
 if [ -f "$ENV_FILE" ]; then
     le_live_dir=$(grep -m1 '^LE_CERT_LIVE_DIR=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
 fi
 if [ -z "$le_live_dir" ] || [ ! -d "$le_live_dir" ]; then
-    echo "betterdesk-reload: LE_CERT_LIVE_DIR missing or invalid — skipping cert copy" >&2
-    systemctl restart betterdesk-server betterdesk-console 2>/dev/null || true
+    echo "sova-reload: LE_CERT_LIVE_DIR missing or invalid — skipping cert copy" >&2
+    systemctl restart sova-server sova-console 2>/dev/null || true
     exit 0
 fi
 
 mkdir -p "$SSL_DIR"
-for pair in "fullchain.pem:betterdesk.crt" "privkey.pem:betterdesk.key"; do
+for pair in "fullchain.pem:sova.crt" "privkey.pem:sova.key"; do
     src_name="${pair%%:*}"
     dest_name="${pair##*:}"
     src="$le_live_dir/$src_name"
@@ -1017,15 +1017,15 @@ for pair in "fullchain.pem:betterdesk.crt" "privkey.pem:betterdesk.key"; do
         dest_real=$(readlink -f "$dest" 2>/dev/null || echo "$dest")
         [ "$src_real" = "$dest_real" ] && rm -f "$dest"
     fi
-    tmp="${dest}.betterdesk.$$.tmp"
+    tmp="${dest}.sova.$$.tmp"
     cp -L "$src" "$tmp"
     mv -f "$tmp" "$dest"
 done
 if id "$SVC_USER" &>/dev/null; then
-    chown root:"$SVC_USER" "$SSL_DIR/betterdesk.crt" "$SSL_DIR/betterdesk.key"
+    chown root:"$SVC_USER" "$SSL_DIR/sova.crt" "$SSL_DIR/sova.key"
 fi
-chmod 640 "$SSL_DIR/betterdesk.crt" "$SSL_DIR/betterdesk.key"
-systemctl restart betterdesk-server betterdesk-console 2>/dev/null || true
+chmod 640 "$SSL_DIR/sova.crt" "$SSL_DIR/sova.key"
+systemctl restart sova-server sova-console 2>/dev/null || true
 HOOK
     chmod +x "$hook"
 }
@@ -1033,12 +1033,12 @@ HOOK
 # Repair installs that symlinked LE certs into ssl/ (console user cannot read privkey).
 maybe_repair_le_ssl_symlinks() {
     local ssl_dir="$RUSTDESK_PATH/ssl"
-    local crt="$ssl_dir/betterdesk.crt"
-    local key="$ssl_dir/betterdesk.key"
+    local crt="$ssl_dir/sova.crt"
+    local key="$ssl_dir/sova.key"
     local env_file="${CONSOLE_PATH}/.env"
     local needs_redeploy="no"
     local ssl_key_env ssl_cert_env
-    local console_user="betterdesk"
+    local console_user="sova"
 
     for f in "$crt" "$key"; do
         if [ -L "$f" ]; then
@@ -1084,7 +1084,7 @@ maybe_repair_le_ssl_symlinks() {
 # When HTTPS uses standard port 443, align HTTP redirect listener to :80 (#219).
 _ensure_standard_https_redirect_ports() {
     local env_file="${CONSOLE_PATH}/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local https_port http_port https_enabled changed=0
     local svc_port svc_https
 
@@ -1114,7 +1114,7 @@ _ensure_standard_https_redirect_ports() {
         fi
     fi
     if [ "$changed" -eq 1 ]; then
-        ensure_betterdesk_console_user >/dev/null
+        ensure_sova_console_user >/dev/null
         print_info "Standard HTTPS ports synced: HTTPS :443, HTTP redirect :80 (#219)"
         return 0
     fi
@@ -1126,7 +1126,7 @@ repair_https_stuck_state() {
     local quiet="${1:-}"
     local changed=0
 
-    repair_console_service_user_line "betterdesk"
+    repair_console_service_user_line "sova"
 
     if ensure_go_server_signal_ports; then
         changed=1
@@ -1161,13 +1161,13 @@ repair_https_stuck_state() {
 _sync_deployed_ssl_paths_to_env() {
     local ssl_dir="$RUSTDESK_PATH/ssl"
     local env_file="${CONSOLE_PATH}/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
 
-    _upsert_env_line "$env_file" SSL_CERT_PATH "$ssl_dir/betterdesk.crt"
-    _upsert_env_line "$env_file" SSL_KEY_PATH "$ssl_dir/betterdesk.key"
+    _upsert_env_line "$env_file" SSL_CERT_PATH "$ssl_dir/sova.crt"
+    _upsert_env_line "$env_file" SSL_KEY_PATH "$ssl_dir/sova.key"
     if [ -f "$svc_file" ]; then
-        _upsert_systemd_env "$svc_file" SSL_CERT_PATH "$ssl_dir/betterdesk.crt"
-        _upsert_systemd_env "$svc_file" SSL_KEY_PATH "$ssl_dir/betterdesk.key"
+        _upsert_systemd_env "$svc_file" SSL_CERT_PATH "$ssl_dir/sova.crt"
+        _upsert_systemd_env "$svc_file" SSL_KEY_PATH "$ssl_dir/sova.key"
         systemctl daemon-reload 2>/dev/null || true
     fi
 }
@@ -1175,7 +1175,7 @@ _sync_deployed_ssl_paths_to_env() {
 # When HTTPS is enabled, ensure the console user can read the TLS private key (#219).
 # Re-copies from LE_CERT_LIVE_DIR when symlinks, unreadable keys, or /etc/letsencrypt paths remain.
 ensure_console_tls_material_readable() {
-    local https_enabled console_user="betterdesk"
+    local https_enabled console_user="sova"
     local env_file="${CONSOLE_PATH}/.env"
     local ssl_dir="$RUSTDESK_PATH/ssl"
     local ssl_key_path ssl_cert_path
@@ -1190,7 +1190,7 @@ ensure_console_tls_material_readable() {
     ssl_key_path=$(read_effective_console_setting SSL_KEY_PATH "")
     ssl_cert_path=$(read_effective_console_setting SSL_CERT_PATH "")
     if [ -z "$ssl_key_path" ]; then
-        ssl_key_path="$ssl_dir/betterdesk.key"
+        ssl_key_path="$ssl_dir/sova.key"
     fi
 
     if id "$console_user" &>/dev/null && [ -e "$ssl_key_path" ]; then
@@ -1209,15 +1209,15 @@ ensure_console_tls_material_readable() {
         print_info "Re-deploying Let's Encrypt certificate for console user (#219)"
         if deploy_ssl_material_to_rustdesk_dir "$le_live_dir/fullchain.pem" "$le_live_dir/privkey.pem" "$le_live_dir"; then
             _sync_deployed_ssl_paths_to_env
-            if id "$console_user" &>/dev/null && runuser -u "$console_user" -- test -r "$ssl_dir/betterdesk.key" 2>/dev/null; then
+            if id "$console_user" &>/dev/null && runuser -u "$console_user" -- test -r "$ssl_dir/sova.key" 2>/dev/null; then
                 return 0
             fi
         fi
     fi
 
-    print_warning "HTTPS is enabled but console user cannot read TLS key (${ssl_key_path:-$ssl_dir/betterdesk.key})"
-    print_info "  Check: runuser -u betterdesk -- test -r ${ssl_key_path:-$ssl_dir/betterdesk.key}"
-    print_info "  Logs:  journalctl -u betterdesk-console -n 30 --no-pager"
+    print_warning "HTTPS is enabled but console user cannot read TLS key (${ssl_key_path:-$ssl_dir/sova.key})"
+    print_info "  Check: runuser -u sova -- test -r ${ssl_key_path:-$ssl_dir/sova.key}"
+    print_info "  Logs:  journalctl -u sova-console -n 30 --no-pager"
     return 1
 }
 
@@ -1247,7 +1247,7 @@ _wait_for_http_code() {
     return 1
 }
 
-# Sync .env + betterdesk-console.service for HTTP or HTTPS panel mode (#219).
+# Sync .env + sova-console.service for HTTP or HTTPS panel mode (#219).
 apply_console_protocol_mode() {
     local mode="$1"
     local cert_crt="${2:-}"
@@ -1255,7 +1255,7 @@ apply_console_protocol_mode() {
     local api_tls="${4:-false}"
     local allow_self_signed="${5:-true}"
     local env_file="${CONSOLE_PATH}/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local go_port="${GO_API_PORT:-21114}"
 
     if [ "$mode" = "http" ]; then
@@ -1325,10 +1325,10 @@ apply_console_protocol_mode() {
     systemctl daemon-reload 2>/dev/null || true
 }
 
-# Enable signal/relay TLS on betterdesk-server using deployed panel cert (#219).
+# Enable signal/relay TLS on sova-server using deployed panel cert (#219).
 sync_go_server_signal_relay_tls() {
     local ssl_dir="${1:-$RUSTDESK_PATH/ssl}"
-    local go_svc_file="/etc/systemd/system/betterdesk-server.service"
+    local go_svc_file="/etc/systemd/system/sova-server.service"
 
     [ -f "$go_svc_file" ] || return 0
     sed -i 's/ -tls-cert [^ ]*//g' "$go_svc_file"
@@ -1337,13 +1337,13 @@ sync_go_server_signal_relay_tls() {
     sed -i 's/ -tls-relay//g' "$go_svc_file"
     sed -i 's/ -tls-api//g' "$go_svc_file"
     sed -i 's/ -force-https//g' "$go_svc_file"
-    sed -i "s|\(ExecStart=.*betterdesk-server[^$]*\)|\1 -tls-cert $ssl_dir/betterdesk.crt -tls-key $ssl_dir/betterdesk.key -tls-signal -tls-relay|" "$go_svc_file"
+    sed -i "s|\(ExecStart=.*sova-server[^$]*\)|\1 -tls-cert $ssl_dir/sova.crt -tls-key $ssl_dir/sova.key -tls-signal -tls-relay|" "$go_svc_file"
     systemctl daemon-reload 2>/dev/null || true
 }
 
-# Remove signal/relay TLS from betterdesk-server (#219).
+# Remove signal/relay TLS from sova-server (#219).
 clear_go_server_signal_relay_tls() {
-    local go_svc_file="/etc/systemd/system/betterdesk-server.service"
+    local go_svc_file="/etc/systemd/system/sova-server.service"
 
     [ -f "$go_svc_file" ] || return 0
     sed -i 's/ -tls-cert [^ ]*//g' "$go_svc_file"
@@ -1366,7 +1366,7 @@ sync_go_server_trust_proxy() {
     else
         trusted_cidrs="127.0.0.1/32,::1/128"
     fi
-    local go_svc_file="/etc/systemd/system/betterdesk-server.service"
+    local go_svc_file="/etc/systemd/system/sova-server.service"
 
     [ -f "$go_svc_file" ] || return 0
     if [ "$enable" = "yes" ]; then
@@ -1375,7 +1375,7 @@ sync_go_server_trust_proxy() {
             _upsert_systemd_env "$go_svc_file" TRUSTED_PROXIES "$trusted_cidrs"
         fi
         if ! grep -q '\-trust-proxy' "$go_svc_file" 2>/dev/null; then
-            sed -i 's|\(ExecStart=.*betterdesk-server[^$]*\)|\1 -trust-proxy|' "$go_svc_file"
+            sed -i 's|\(ExecStart=.*sova-server[^$]*\)|\1 -trust-proxy|' "$go_svc_file"
         fi
     else
         _remove_systemd_env "$go_svc_file" TRUST_PROXY
@@ -1392,7 +1392,7 @@ apply_console_reverse_proxy_mode() {
     local ws_origins="${3:-}"
     local panel_bind="${4:-127.0.0.1}"
     local env_file="${CONSOLE_PATH}/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local go_port="${GO_API_PORT:-21114}"
 
     apply_console_protocol_mode http
@@ -1457,7 +1457,7 @@ generate_reverse_proxy_config() {
     fi
 
     if [ -z "$panel_bind" ]; then
-        if confirm "Is the reverse proxy on THIS server (same host as BetterDesk)?"; then
+        if confirm "Is the reverse proxy on THIS server (same host as SoVa Desk)?"; then
             panel_bind="127.0.0.1"
             upstream_addr="127.0.0.1"
         else
@@ -1465,7 +1465,7 @@ generate_reverse_proxy_config() {
             upstream_addr=$(ip route get 1 2>/dev/null | awk '{print $7; exit}')
             [ -z "$upstream_addr" ] && upstream_addr=$(hostname -I 2>/dev/null | awk '{print $1}')
             echo ""
-            read -p "BetterDesk LAN IP for proxy upstream [${upstream_addr}]: " _custom_up
+            read -p "SoVa Desk LAN IP for proxy upstream [${upstream_addr}]: " _custom_up
             [ -n "$_custom_up" ] && upstream_addr="$_custom_up"
             if [ -z "$upstream_addr" ]; then
                 print_error "LAN IP required when the proxy runs on another host"
@@ -1511,8 +1511,8 @@ generate_reverse_proxy_config() {
     local ws_origins="https://${panel_host}"
     [ "$panel_host" != "$server_id" ] && ws_origins="${ws_origins},https://${server_id}"
 
-    cat > "$out_dir/betterdesk.env.snippet" << EOF
-# BetterDesk reverse-proxy mode (#267) — merge into $CONSOLE_PATH/.env
+    cat > "$out_dir/sova.env.snippet" << EOF
+# SoVa Desk reverse-proxy mode (#267) — merge into $CONSOLE_PATH/.env
 HOST=${panel_bind}
 HTTPS_ENABLED=false
 HTTP_REDIRECT_HTTPS=false
@@ -1526,8 +1526,8 @@ WS_ALLOWED_ORIGINS=${ws_origins}
 EOF
 
     if [ "$proxy_type" = "nginx" ]; then
-        cat > "$out_dir/nginx.betterdesk.conf.snippet" << EOF
-# BetterDesk reverse-proxy snippet (#267) — merge into your nginx site config.
+        cat > "$out_dir/nginx.sova.conf.snippet" << EOF
+# SoVa Desk reverse-proxy snippet (#267) — merge into your nginx site config.
 # TLS certificates: use certbot --nginx or your existing cert setup.
 
 map \$http_upgrade \$connection_upgrade {
@@ -1542,7 +1542,7 @@ server {
     client_max_body_size 100M;
 EOF
         if [ "$route_wss" = "yes" ]; then
-            cat >> "$out_dir/nginx.betterdesk.conf.snippet" << EOF
+            cat >> "$out_dir/nginx.sova.conf.snippet" << EOF
 
     location = /ws/id {
         proxy_pass http://${upstream_addr}:21118;
@@ -1573,7 +1573,7 @@ EOF
     }
 EOF
         fi
-        cat >> "$out_dir/nginx.betterdesk.conf.snippet" << EOF
+        cat >> "$out_dir/nginx.sova.conf.snippet" << EOF
 
     location ~ ^/ws/ {
         proxy_pass http://${upstream_addr}:5000;
@@ -1604,10 +1604,10 @@ EOF
     }
 }
 EOF
-        print_success "Nginx snippet: $out_dir/nginx.betterdesk.conf.snippet"
+        print_success "Nginx snippet: $out_dir/nginx.sova.conf.snippet"
     else
         cat > "$out_dir/caddy.Caddyfile.snippet" << EOF
-# BetterDesk reverse-proxy snippet (#267) — merge into /etc/caddy/Caddyfile
+# SoVa Desk reverse-proxy snippet (#267) — merge into /etc/caddy/Caddyfile
 # Caddy obtains TLS automatically when this block is active.
 
 ${panel_host} {
@@ -1647,7 +1647,7 @@ EOF
     fi
 
     cat > "$out_dir/firewall-notes.txt" << EOF
-BetterDesk reverse-proxy firewall (#267)
+SoVa Desk reverse-proxy firewall (#267)
 
 Through your reverse proxy (HTTPS :443):
   - Panel + console WebSockets -> http://${upstream_addr}:5000
@@ -1669,7 +1669,7 @@ EOF
 
     cat > "$out_dir/verify.sh" << 'VERIFYEOF'
 #!/usr/bin/env bash
-# BetterDesk reverse-proxy verification (#267)
+# SoVa Desk reverse-proxy verification (#267)
 set -euo pipefail
 PANEL_HOST="${1:-}"
 if [ -z "$PANEL_HOST" ]; then
@@ -1694,8 +1694,8 @@ VERIFYEOF
 
     echo ""
     print_info "Reverse-proxy files written to: $out_dir"
-    print_info "  betterdesk.env.snippet"
-    [ "$proxy_type" = "nginx" ] && print_info "  nginx.betterdesk.conf.snippet" || print_info "  caddy.Caddyfile.snippet"
+    print_info "  sova.env.snippet"
+    [ "$proxy_type" = "nginx" ] && print_info "  nginx.sova.conf.snippet" || print_info "  caddy.Caddyfile.snippet"
     print_info "  verify.sh $panel_host"
     print_info "  firewall-notes.txt"
     print_info "Documentation: docs/setup/REVERSE_PROXY.md"
@@ -1712,13 +1712,13 @@ VERIFYEOF
     REVERSE_PROXY_UPSTREAM_ADDR="$upstream_addr"
 }
 
-# Interactive reverse-proxy wizard: apply BetterDesk settings + emit proxy snippets (#267).
+# Interactive reverse-proxy wizard: apply SoVa Desk settings + emit proxy snippets (#267).
 do_configure_reverse_proxy() {
     local panel_host server_id ws_origins panel_bind
 
     echo ""
-    print_step "Configuring BetterDesk for external reverse proxy (TLS at Caddy/Nginx)..."
-    print_info "Your proxy terminates TLS on :443; BetterDesk panel stays plain HTTP"
+    print_step "Configuring SoVa Desk for external reverse proxy (TLS at Caddy/Nginx)..."
+    print_info "Your proxy terminates TLS on :443; SoVa Desk panel stays plain HTTP"
     echo ""
 
     read -p "Public panel hostname (e.g., console.example.com): " panel_host
@@ -1737,7 +1737,7 @@ do_configure_reverse_proxy() {
 
     apply_console_reverse_proxy_mode "$panel_host" "$server_id" "$ws_origins" "$panel_bind"
 
-    print_success "BetterDesk configured for external reverse proxy"
+    print_success "SoVa Desk configured for external reverse proxy"
     echo ""
     if [ "$panel_bind" = "0.0.0.0" ]; then
         print_info "  Panel (bind):   http://0.0.0.0:$(resolve_panel_http_port) (remote proxy host)"
@@ -1781,7 +1781,7 @@ resolve_panel_health_port() {
 # Offer native HTTPS on standard port 443 after enabling TLS (#219 follow-up).
 maybe_offer_standard_https_port() {
     local env_file="${CONSOLE_PATH}/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local current_https_port
 
     current_https_port=$(read_effective_console_setting HTTPS_PORT 5443)
@@ -1799,7 +1799,7 @@ maybe_offer_standard_https_port() {
             _upsert_systemd_env "$svc_file" HTTP_REDIRECT_HTTPS true
             systemctl daemon-reload 2>/dev/null || true
         fi
-        ensure_betterdesk_console_user >/dev/null
+        ensure_sova_console_user >/dev/null
         print_success "Standard ports configured: HTTPS :443, HTTP redirect :80"
         print_info "Ensure nothing else listens on :443/:80; open firewall: ufw allow 443/tcp (and 80/tcp if redirecting)"
     fi
@@ -1844,8 +1844,8 @@ prepare_console_after_update() {
     if [ ! -f "$CONSOLE_PATH/server.js" ]; then
         return 0
     fi
-    systemctl reset-failed betterdesk-console 2>/dev/null || true
-    repair_console_service_user_line "betterdesk" || true
+    systemctl reset-failed sova-console 2>/dev/null || true
+    repair_console_service_user_line "sova" || true
     repair_https_stuck_state yes || true
     if [ -f "$CONSOLE_PATH/scripts/linux-ensure-console-user.js" ] && command -v node &>/dev/null; then
         if [ "$(id -u)" -eq 0 ]; then
@@ -1856,7 +1856,7 @@ prepare_console_after_update() {
             print_warning "Console permission sync skipped (run as root: sudo node $CONSOLE_PATH/scripts/linux-ensure-console-user.js)"
         fi
     fi
-    repair_console_service_user_line "betterdesk" || true
+    repair_console_service_user_line "sova" || true
     ensure_console_tls_material_readable 2>/dev/null || true
     return 0
 }
@@ -1869,33 +1869,33 @@ maybe_create_admin_user_on_update() {
     create_admin_user
 }
 
-# Start / restart betterdesk-console and verify panel health (#306).
+# Start / restart sova-console and verify panel health (#306).
 # Always attempts start even when earlier helper steps failed (set -e safe).
-start_betterdesk_console_verified() {
+start_sova_console_verified() {
     local panel_port console_state
     panel_port=$(resolve_panel_health_port)
 
-    print_info "Starting betterdesk-console (Node.js)..."
-    systemctl reset-failed betterdesk-console 2>/dev/null || true
-    if systemctl is-active --quiet betterdesk-console 2>/dev/null; then
-        systemctl restart betterdesk-console || true
+    print_info "Starting sova-console (Node.js)..."
+    systemctl reset-failed sova-console 2>/dev/null || true
+    if systemctl is-active --quiet sova-console 2>/dev/null; then
+        systemctl restart sova-console || true
     else
         # Prefer start when inactive (post graceful_stop); fall back to restart.
-        systemctl start betterdesk-console 2>/dev/null || systemctl restart betterdesk-console || true
+        systemctl start sova-console 2>/dev/null || systemctl restart sova-console || true
     fi
     sleep 2
 
-    if ! verify_service_health "betterdesk-console" "$panel_port" 10; then
+    if ! verify_service_health "sova-console" "$panel_port" 10; then
         print_warning "Web console may not be running correctly"
-        console_state=$(systemctl show betterdesk-console --property=ActiveState --value 2>/dev/null || echo "unknown")
-        print_error "betterdesk-console ActiveState=${console_state} (expected: active)"
+        console_state=$(systemctl show sova-console --property=ActiveState --value 2>/dev/null || echo "unknown")
+        print_error "sova-console ActiveState=${console_state} (expected: active)"
         print_info "  Possible causes: npm modules, TLS key permissions, port ${panel_port} conflict"
-        print_info "Run: journalctl -u betterdesk-console -n 50 --no-pager"
-        print_info "Then: sudo systemctl start betterdesk-console"
+        print_info "Run: journalctl -u sova-console -n 50 --no-pager"
+        print_info "Then: sudo systemctl start sova-console"
         return 1
     fi
 
-    print_success "betterdesk-console started and healthy (port ${panel_port})"
+    print_success "sova-console started and healthy (port ${panel_port})"
     return 0
 }
 
@@ -1924,23 +1924,23 @@ start_services_with_verification() {
     fi
     
     # Enable services
-    systemctl enable betterdesk-server betterdesk-console 2>/dev/null || true
+    systemctl enable sova-server sova-console 2>/dev/null || true
     
     # Start Go server (signal + relay + API in one binary)
-    print_info "Starting betterdesk-server (Go)..."
-    systemctl start betterdesk-server
+    print_info "Starting sova-server (Go)..."
+    systemctl start sova-server
     sleep 3
     
-    if ! verify_service_health "betterdesk-server" "21116" 10; then
-        print_error "Failed to start betterdesk-server"
-        print_info "Service state: $(systemctl show betterdesk-server --property=ActiveState --value 2>/dev/null)"
-        print_info "Run: journalctl -u betterdesk-server -n 50 --no-pager"
+    if ! verify_service_health "sova-server" "21116" 10; then
+        print_error "Failed to start sova-server"
+        print_info "Service state: $(systemctl show sova-server --property=ActiveState --value 2>/dev/null)"
+        print_info "Run: journalctl -u sova-server -n 50 --no-pager"
         # Still try to bring console up — operator may recover Go separately (#306)
         prepare_console_after_update || true
-        start_betterdesk_console_verified || true
+        start_sova_console_verified || true
         return 1
     fi
-    print_success "betterdesk-server started and healthy"
+    print_success "sova-server started and healthy"
     
     # Inject shared API key into Go server database for Node.js ↔ Go communication.
     # Must not abort under set -e (sqlite3 busy/locked after Go start was leaving Console down — #306).
@@ -1963,7 +1963,7 @@ start_services_with_verification() {
     fi
     
     # Verify relay port is also listening
-    if ! verify_service_health "betterdesk-server" "21117" 5; then
+    if ! verify_service_health "sova-server" "21117" 5; then
         print_warning "Relay port 21117 may not be ready yet"
     fi
 
@@ -1971,7 +1971,7 @@ start_services_with_verification() {
     # Never abort start path under set -e (#306)
     prepare_console_after_update || print_warning "Console prep after update reported issues (continuing)"
 
-    if ! start_betterdesk_console_verified; then
+    if ! start_sova_console_verified; then
         console_ok=false
     fi
 
@@ -1981,8 +1981,8 @@ start_services_with_verification() {
     fi
 
     print_error "Server is running but web console failed to start"
-    print_info "Run: journalctl -u betterdesk-console -n 50 --no-pager"
-    print_info "Then: sudo systemctl start betterdesk-console"
+    print_info "Run: journalctl -u sova-console -n 50 --no-pager"
+    print_info "Then: sudo systemctl start sova-console"
     return 1
 }
 
@@ -2004,7 +2004,7 @@ detect_installation() {
         INSTALL_STATUS="partial"
         
         # Check Go server binary (primary) or legacy Rust binaries
-        if [ -f "$RUSTDESK_PATH/betterdesk-server" ]; then
+        if [ -f "$RUSTDESK_PATH/sova-server" ]; then
             BINARIES_OK=true
             SERVER_TYPE="go"
         elif [ -f "$RUSTDESK_PATH/hbbs" ] || [ -f "$RUSTDESK_PATH/hbbs-v8-api" ]; then
@@ -2052,7 +2052,7 @@ detect_installation() {
     fi
     
     # Check services (Go server or legacy Rust)
-    if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+    if systemctl is-active --quiet sova-server 2>/dev/null; then
         HBBS_RUNNING=true
         HBBR_RUNNING=true  # Go server handles both
     elif systemctl is-active --quiet rustdesksignal 2>/dev/null || \
@@ -2067,8 +2067,8 @@ detect_installation() {
         fi
     fi
     
-    if systemctl is-active --quiet betterdesk-console 2>/dev/null || \
-       systemctl is-active --quiet betterdesk 2>/dev/null; then
+    if systemctl is-active --quiet sova-console 2>/dev/null || \
+       systemctl is-active --quiet sova 2>/dev/null; then
         CONSOLE_RUNNING=true
     fi
 }
@@ -2106,7 +2106,7 @@ merge_console_env() {
     local database_url=""
     local admin_password="${ADMIN_PASSWORD:-}"
     local session_secret=""
-    local subst_file="/tmp/betterdesk-env-subst-$$.json"
+    local subst_file="/tmp/sova-env-subst-$$.json"
     local go_port="${GO_API_PORT:-21114}"
     local client_port="${CLIENT_API_PORT:-21121}"
 
@@ -2159,8 +2159,8 @@ merge_console_env() {
     export BD_SUBST_API_PORT="$client_port"
     export BD_SUBST_DEFAULT_ADMIN_PASSWORD="$admin_password"
     export BD_SUBST_SESSION_SECRET="$session_secret"
-    export BD_SUBST_SSL_CERT_PATH="$ssl_dir/betterdesk.crt"
-    export BD_SUBST_SSL_KEY_PATH="$ssl_dir/betterdesk.key"
+    export BD_SUBST_SSL_CERT_PATH="$ssl_dir/sova.crt"
+    export BD_SUBST_SSL_KEY_PATH="$ssl_dir/sova.key"
 
     if [ -f "$subst_script" ]; then
         node "$subst_script" "$subst_file" 2>/dev/null || true
@@ -2223,7 +2223,7 @@ auto_detect_paths() {
     
     # If RUSTDESK_PATH is already set (via env var), validate it
     if [ -n "$RUSTDESK_PATH" ]; then
-        if [ -d "$RUSTDESK_PATH" ] && { [ -f "$RUSTDESK_PATH/betterdesk-server" ] || [ -f "$RUSTDESK_PATH/hbbs" ] || [ -f "$RUSTDESK_PATH/hbbs-v8-api" ]; }; then
+        if [ -d "$RUSTDESK_PATH" ] && { [ -f "$RUSTDESK_PATH/sova-server" ] || [ -f "$RUSTDESK_PATH/hbbs" ] || [ -f "$RUSTDESK_PATH/hbbs-v8-api" ]; }; then
             print_info "Using configured RustDesk path: $RUSTDESK_PATH"
             found=true
         else
@@ -2235,7 +2235,7 @@ auto_detect_paths() {
     # Auto-detect if not found
     if [ -z "$RUSTDESK_PATH" ]; then
         for path in "${COMMON_RUSTDESK_PATHS[@]}"; do
-            if [ -d "$path" ] && { [ -f "$path/betterdesk-server" ] || [ -f "$path/hbbs" ] || [ -f "$path/hbbs-v8-api" ]; }; then
+            if [ -d "$path" ] && { [ -f "$path/sova-server" ] || [ -f "$path/hbbs" ] || [ -f "$path/hbbs-v8-api" ]; }; then
                 RUSTDESK_PATH="$path"
                 print_success "Detected RustDesk installation: $RUSTDESK_PATH"
                 found=true
@@ -2246,7 +2246,7 @@ auto_detect_paths() {
     
     # If still not found, use default for new installations
     if [ -z "$RUSTDESK_PATH" ]; then
-        RUSTDESK_PATH="/opt/betterdesk"
+        RUSTDESK_PATH="/srv/sova-desk"
         print_info "No installation detected. Default path: $RUSTDESK_PATH"
     fi
     
@@ -2288,7 +2288,7 @@ auto_detect_paths() {
     
     # Default Console path if not found
     if [ -z "$CONSOLE_PATH" ]; then
-        CONSOLE_PATH="/opt/BetterDeskConsole"
+        CONSOLE_PATH="/srv/sova-desk/web-console"
     fi
     
     # Update DB_PATH based on detected RUSTDESK_PATH
@@ -2303,7 +2303,7 @@ configure_paths() {
         $'Auto-detect paths\tScan common install locations'
         $'Set server path\tManually set the RustDesk server path'
         $'Set console path\tManually set the web console path'
-        $'Reset to defaults\t/opt/betterdesk + /opt/BetterDeskConsole'
+        $'Reset to defaults\t/srv/sova-desk + /srv/sova-desk/web-console'
         $'Back\tReturn to the main menu'
     )
     local _menu_returns=( 1 2 3 4 0 )
@@ -2343,7 +2343,7 @@ configure_paths() {
             ;;
         3)
             echo ""
-            echo -n "Enter Console path (e.g., /opt/BetterDeskConsole): "
+            echo -n "Enter Console path (e.g., /srv/sova-desk/web-console): "
             read -r new_path
             if [ -n "$new_path" ]; then
                 if [ -d "$new_path" ]; then
@@ -2362,8 +2362,8 @@ configure_paths() {
             configure_paths
             ;;
         4)
-            RUSTDESK_PATH="/opt/betterdesk"
-            CONSOLE_PATH="/opt/BetterDeskConsole"
+            RUSTDESK_PATH="/srv/sova-desk"
+            CONSOLE_PATH="/srv/sova-desk/web-console"
             DB_PATH="$RUSTDESK_PATH/db_v2.sqlite3"
             print_success "Paths reset to defaults"
             press_enter
@@ -2458,21 +2458,21 @@ print_status() {
     echo ""
     
     # Check if using Go server (single binary) or legacy Rust (two binaries)
-    if [ "${SERVER_TYPE:-}" = "go" ] || systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+    if [ "${SERVER_TYPE:-}" = "go" ] || systemctl is-active --quiet sova-server 2>/dev/null; then
         local go_state
-        go_state=$(systemctl show betterdesk-server --property=ActiveState --value 2>/dev/null || echo "unknown")
+        go_state=$(systemctl show sova-server --property=ActiveState --value 2>/dev/null || echo "unknown")
         case "$go_state" in
             active)
-                echo -e "  BetterDesk Server (Go): ${GREEN}● Active${NC} (Signal + Relay + API)"
+                echo -e "  SoVa Desk Server (Go): ${GREEN}● Active${NC} (Signal + Relay + API)"
                 ;;
             failed)
-                echo -e "  BetterDesk Server (Go): ${RED}✗ Failed${NC} (check: journalctl -u betterdesk-server -n 30)"
+                echo -e "  SoVa Desk Server (Go): ${RED}✗ Failed${NC} (check: journalctl -u sova-server -n 30)"
                 ;;
             activating)
-                echo -e "  BetterDesk Server (Go): ${YELLOW}◌ Starting...${NC}"
+                echo -e "  SoVa Desk Server (Go): ${YELLOW}◌ Starting...${NC}"
                 ;;
             *)
-                echo -e "  BetterDesk Server (Go): ${RED}○ Inactive${NC} ($go_state)"
+                echo -e "  SoVa Desk Server (Go): ${RED}○ Inactive${NC} ($go_state)"
                 ;;
         esac
     else
@@ -2492,13 +2492,13 @@ print_status() {
     
     # Console status with state details
     local console_state
-    console_state=$(systemctl show betterdesk-console --property=ActiveState --value 2>/dev/null || echo "unknown")
+    console_state=$(systemctl show sova-console --property=ActiveState --value 2>/dev/null || echo "unknown")
     case "$console_state" in
         active)
             echo -e "  Web Console:   ${GREEN}● Active${NC}"
             ;;
         failed)
-            echo -e "  Web Console:   ${RED}✗ Failed${NC} (check: journalctl -u betterdesk-console -n 30)"
+            echo -e "  Web Console:   ${RED}✗ Failed${NC} (check: journalctl -u sova-console -n 30)"
             ;;
         activating)
             echo -e "  Web Console:   ${YELLOW}◌ Starting...${NC}"
@@ -2613,7 +2613,7 @@ install_golang() {
 }
 
 compile_go_server() {
-    print_step "Compiling BetterDesk Go server..."
+    print_step "Compiling SoVa Desk Go server..."
     
     if [ ! -d "$GO_SERVER_SOURCE" ]; then
         print_error "Go server source not found: $GO_SERVER_SOURCE"
@@ -2633,11 +2633,11 @@ compile_go_server() {
     cd "$GO_SERVER_SOURCE"
     
     # Clean previous builds
-    rm -f betterdesk-server betterdesk-server-linux-*
+    rm -f sova-server sova-server-linux-*
     
     # Build
-    print_info "Building BetterDesk server for $ARCH_NAME..."
-    local output_name="betterdesk-server"
+    print_info "Building SoVa Desk server for $ARCH_NAME..."
+    local output_name="sova-server"
     
     # Download dependencies
     print_info "Downloading Go modules..."
@@ -2665,12 +2665,12 @@ verify_go_binary() {
     local binary_path="$1"
     
     if [ -z "$binary_path" ]; then
-        binary_path="$GO_SERVER_SOURCE/betterdesk-server"
+        binary_path="$GO_SERVER_SOURCE/sova-server"
     fi
     
     if [ ! -f "$binary_path" ]; then
         # Check installed location
-        binary_path="$RUSTDESK_PATH/betterdesk-server"
+        binary_path="$RUSTDESK_PATH/sova-server"
     fi
     
     if [ ! -f "$binary_path" ]; then
@@ -2686,7 +2686,7 @@ verify_go_binary() {
 }
 
 verify_binaries() {
-    print_step "Verifying BetterDesk server..."
+    print_step "Verifying SoVa Desk server..."
     
     if [ "$SKIP_VERIFY" = true ]; then
         print_warning "Verification skipped (--skip-verify)"
@@ -2696,24 +2696,24 @@ verify_binaries() {
     # Check for precompiled binary
     local found=false
     
-    if [ -f "$GO_SERVER_SOURCE/betterdesk-server" ]; then
-        if verify_go_binary "$GO_SERVER_SOURCE/betterdesk-server"; then
-            local size=$(du -h "$GO_SERVER_SOURCE/betterdesk-server" | cut -f1)
+    if [ -f "$GO_SERVER_SOURCE/sova-server" ]; then
+        if verify_go_binary "$GO_SERVER_SOURCE/sova-server"; then
+            local size=$(du -h "$GO_SERVER_SOURCE/sova-server" | cut -f1)
             print_success "Found compiled binary in source directory ($size)"
             found=true
         fi
     fi
     
-    if [ -f "$RUSTDESK_PATH/betterdesk-server" ]; then
-        if verify_go_binary "$RUSTDESK_PATH/betterdesk-server"; then
-            local size=$(du -h "$RUSTDESK_PATH/betterdesk-server" | cut -f1)
+    if [ -f "$RUSTDESK_PATH/sova-server" ]; then
+        if verify_go_binary "$RUSTDESK_PATH/sova-server"; then
+            local size=$(du -h "$RUSTDESK_PATH/sova-server" | cut -f1)
             print_success "Found installed binary ($size)"
             found=true
         fi
     fi
     
     if [ "$found" = false ]; then
-        print_warning "No BetterDesk server binary found"
+        print_warning "No SoVa Desk server binary found"
         print_info "Binary will be compiled during installation"
     fi
     
@@ -2789,7 +2789,7 @@ install_postgresql() {
 }
 
 setup_postgresql_database() {
-    print_step "Setting up PostgreSQL database for BetterDesk..."
+    print_step "Setting up PostgreSQL database for SoVa Desk..."
 
     if ! is_valid_pg_identifier "$POSTGRESQL_USER"; then
         print_error "Invalid PostgreSQL username: $POSTGRESQL_USER"
@@ -2913,20 +2913,20 @@ migrate_sqlite_to_postgresql() {
     
     # Find migration binary
     local migrate_bin=""
-    if [ -f "$SCRIPT_DIR/betterdesk-server/tools/migrate/migrate-linux-amd64" ]; then
-        migrate_bin="$SCRIPT_DIR/betterdesk-server/tools/migrate/migrate-linux-amd64"
+    if [ -f "$SCRIPT_DIR/sova-server/tools/migrate/migrate-linux-amd64" ]; then
+        migrate_bin="$SCRIPT_DIR/sova-server/tools/migrate/migrate-linux-amd64"
     elif [ -f "$SCRIPT_DIR/tools/migrate/migrate-linux-amd64" ]; then
         migrate_bin="$SCRIPT_DIR/tools/migrate/migrate-linux-amd64"
-    elif [ -f "/opt/betterdesk-go/migrate" ]; then
-        migrate_bin="/opt/betterdesk-go/migrate"
+    elif [ -f "/opt/sova-go/migrate" ]; then
+        migrate_bin="/opt/sova-go/migrate"
     fi
     
     # Try to compile migration tool from source if not found or outdated
     if [ -z "$migrate_bin" ] && command -v go &>/dev/null; then
-        local migrate_src="$SCRIPT_DIR/betterdesk-server/tools/migrate"
+        local migrate_src="$SCRIPT_DIR/sova-server/tools/migrate"
         if [ -d "$migrate_src" ]; then
             print_info "Compiling migration tool from source..."
-            if (cd "$SCRIPT_DIR/betterdesk-server" && go build -o "tools/migrate/migrate-linux-amd64" ./tools/migrate/) 2>&1; then
+            if (cd "$SCRIPT_DIR/sova-server" && go build -o "tools/migrate/migrate-linux-amd64" ./tools/migrate/) 2>&1; then
                 migrate_bin="$migrate_src/migrate-linux-amd64"
                 print_success "Migration tool compiled successfully"
             else
@@ -2947,7 +2947,7 @@ migrate_sqlite_to_postgresql() {
     if ! "$migrate_bin" -mode backup -src /dev/null 2>&1 | grep -qv "flag provided but not defined"; then
         if "$migrate_bin" -mode backup -src /dev/null 2>&1 | grep -q "flag provided but not defined"; then
             print_warning "Migration binary is outdated (missing -mode flag)"
-            print_info "Rebuild with: cd betterdesk-server && go build -o tools/migrate/migrate-linux-amd64 ./tools/migrate/"
+            print_info "Rebuild with: cd sova-server && go build -o tools/migrate/migrate-linux-amd64 ./tools/migrate/"
             return 0
         fi
     fi
@@ -3122,7 +3122,7 @@ install_nodejs_console() {
     cd "$CONSOLE_PATH"
     
     # Install npm dependencies with proper error handling
-    local npm_log="/tmp/betterdesk_npm_install.log"
+    local npm_log="/tmp/sova_npm_install.log"
     if ! npm install --production > "$npm_log" 2>&1; then
         print_error "npm install failed! Check log:"
         tail -20 "$npm_log"
@@ -3144,8 +3144,8 @@ install_nodejs_console() {
     rm -f "$npm_log"
 
     # Server Management Terminal sudo hint (BETA — manual step, NOT automated):
-    #   echo 'betterdesk-console ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/bin/journalctl' \
-    #       | sudo tee /etc/sudoers.d/betterdesk-console
+    #   echo 'sova-console ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/bin/journalctl' \
+    #       | sudo tee /etc/sudoers.d/sova-console
     # The installer never modifies sudoers; admins opt in manually.
     echo ""
     
@@ -3188,7 +3188,7 @@ install_nodejs_console() {
         cat > "$CONSOLE_PATH/data/.admin_credentials" << CREDEOF
 Admin Username: admin
 Admin Password: $nodejs_admin_password
-Generated by: BetterDesk installer
+Generated by: SoVa Desk installer
 Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 CREDEOF
         chmod 600 "$CONSOLE_PATH/data/.admin_credentials"
@@ -3206,7 +3206,7 @@ CREDEOF
 install_binaries() {
     local force_recompile="${1:-false}"
     
-    print_step "Installing BetterDesk Go Server..."
+    print_step "Installing SoVa Desk Go Server..."
     
     # Ensure architecture is detected
     if [ -z "$ARCH_NAME" ]; then
@@ -3214,14 +3214,14 @@ install_binaries() {
     fi
     
     # Safety: stop services before copying (prevents "Text file busy")
-    if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+    if systemctl is-active --quiet sova-server 2>/dev/null; then
         print_info "Stopping running services before binary installation..."
         graceful_stop_services
     fi
     
     mkdir -p "$RUSTDESK_PATH"
     
-    local go_binary="$GO_SERVER_SOURCE/betterdesk-server"
+    local go_binary="$GO_SERVER_SOURCE/sova-server"
     local need_compile=false
     
     if [ ! -f "$go_binary" ]; then
@@ -3265,10 +3265,10 @@ install_binaries() {
     fi
     
     # Copy binary
-    cp "$go_binary" "$RUSTDESK_PATH/betterdesk-server"
-    chmod +x "$RUSTDESK_PATH/betterdesk-server"
+    cp "$go_binary" "$RUSTDESK_PATH/sova-server"
+    chmod +x "$RUSTDESK_PATH/sova-server"
     
-    print_success "BetterDesk Go Server v$VERSION installed"
+    print_success "SoVa Desk Go Server v$VERSION installed"
     print_info "Single binary replaces both hbbs (signal) and hbbr (relay)"
 }
 
@@ -3322,7 +3322,7 @@ migrate_console() {
     fi
     
     # Stop old console service
-    systemctl stop betterdesk 2>/dev/null || true
+    systemctl stop sova 2>/dev/null || true
     
     # Remove old console files but preserve data
     rm -rf "$CONSOLE_PATH/venv" 2>/dev/null || true
@@ -3338,7 +3338,7 @@ generate_ssl_certificates() {
     local ssl_dir="$RUSTDESK_PATH/ssl"
     
     # Skip if certificates already exist
-    if [ -f "$ssl_dir/betterdesk.crt" ] && [ -f "$ssl_dir/betterdesk.key" ]; then
+    if [ -f "$ssl_dir/sova.crt" ] && [ -f "$ssl_dir/sova.key" ]; then
         print_info "TLS certificates already exist at $ssl_dir"
         print_info "Skipping certificate generation (use SSL config menu to regenerate)"
         return 0
@@ -3381,17 +3381,17 @@ generate_ssl_certificates() {
     
     # Generate certificate with SAN extension (valid for 10 years for self-signed)
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-        -keyout "$ssl_dir/betterdesk.key" \
-        -out "$ssl_dir/betterdesk.crt" \
-        -subj "/CN=$cn/O=BetterDesk/C=PL" \
+        -keyout "$ssl_dir/sova.key" \
+        -out "$ssl_dir/sova.crt" \
+        -subj "/CN=$cn/O=SoVa Desk/C=PL" \
         -addext "subjectAltName=$san_list" \
         2>&1 || {
         print_warning "Certificate generation failed (openssl too old for -addext?)"
         # Fallback without SAN for older openssl
         openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-            -keyout "$ssl_dir/betterdesk.key" \
-            -out "$ssl_dir/betterdesk.crt" \
-            -subj "/CN=$cn/O=BetterDesk/C=PL" \
+            -keyout "$ssl_dir/sova.key" \
+            -out "$ssl_dir/sova.crt" \
+            -subj "/CN=$cn/O=SoVa Desk/C=PL" \
             2>&1 || {
             print_error "Failed to generate self-signed certificate"
             return 1
@@ -3399,7 +3399,7 @@ generate_ssl_certificates() {
     }
     
     # Deploy with console-user-readable permissions (#219)
-    if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key"; then
+    if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/sova.crt" "$ssl_dir/sova.key"; then
         print_error "Failed to set permissions on self-signed certificate"
         return 1
     fi
@@ -3408,23 +3408,23 @@ generate_ssl_certificates() {
     if [ -d "$CONSOLE_PATH" ]; then
         local console_ssl="$CONSOLE_PATH/ssl"
         mkdir -p "$console_ssl"
-        ln -sf "$ssl_dir/betterdesk.crt" "$console_ssl/betterdesk.crt" 2>/dev/null || \
-            cp -f "$ssl_dir/betterdesk.crt" "$console_ssl/betterdesk.crt"
-        ln -sf "$ssl_dir/betterdesk.key" "$console_ssl/betterdesk.key" 2>/dev/null || \
-            cp -f "$ssl_dir/betterdesk.key" "$console_ssl/betterdesk.key"
+        ln -sf "$ssl_dir/sova.crt" "$console_ssl/sova.crt" 2>/dev/null || \
+            cp -f "$ssl_dir/sova.crt" "$console_ssl/sova.crt"
+        ln -sf "$ssl_dir/sova.key" "$console_ssl/sova.key" 2>/dev/null || \
+            cp -f "$ssl_dir/sova.key" "$console_ssl/sova.key"
         
         # Enable HTTPS in .env so Node.js console (port 5000 + 21121) uses TLS
         local env_file="$CONSOLE_PATH/.env"
         if [ -f "$env_file" ]; then
             sed -i "s|^HTTPS_ENABLED=.*|HTTPS_ENABLED=true|" "$env_file"
-            sed -i "s|^SSL_CERT_PATH=.*|SSL_CERT_PATH=$ssl_dir/betterdesk.crt|" "$env_file"
-            sed -i "s|^SSL_KEY_PATH=.*|SSL_KEY_PATH=$ssl_dir/betterdesk.key|" "$env_file"
+            sed -i "s|^SSL_CERT_PATH=.*|SSL_CERT_PATH=$ssl_dir/sova.crt|" "$env_file"
+            sed -i "s|^SSL_KEY_PATH=.*|SSL_KEY_PATH=$ssl_dir/sova.key|" "$env_file"
             # Note: Do NOT change internal Go API URLs to https:// here.
             # API TLS breaks RustDesk clients; Node.js only needs the CA for its own HTTPS endpoints.
             if grep -q '^NODE_EXTRA_CA_CERTS=' "$env_file" 2>/dev/null; then
-                sed -i "s|^NODE_EXTRA_CA_CERTS=.*|NODE_EXTRA_CA_CERTS=$ssl_dir/betterdesk.crt|" "$env_file"
+                sed -i "s|^NODE_EXTRA_CA_CERTS=.*|NODE_EXTRA_CA_CERTS=$ssl_dir/sova.crt|" "$env_file"
             else
-                echo "NODE_EXTRA_CA_CERTS=$ssl_dir/betterdesk.crt" >> "$env_file"
+                echo "NODE_EXTRA_CA_CERTS=$ssl_dir/sova.crt" >> "$env_file"
             fi
             
             # Enterprise TLS compatibility: Go API must remain HTTP because
@@ -3443,8 +3443,8 @@ generate_ssl_certificates() {
     fi
     
     print_success "Self-signed TLS certificate generated (valid 10 years)"
-    print_info "Certificate: $ssl_dir/betterdesk.crt"
-    print_info "Private key: $ssl_dir/betterdesk.key"
+    print_info "Certificate: $ssl_dir/sova.crt"
+    print_info "Private key: $ssl_dir/sova.key"
     print_info "SANs: $san_list"
     [ -n "$lan_ip" ] && [ "$lan_ip" != "$server_ip" ] && print_info "LAN IP included: $lan_ip"
     return 0
@@ -3455,7 +3455,7 @@ ensure_api_compat_proxy_layout() {
     local go_port="${GO_API_PORT:-21114}"
     local client_port="${CLIENT_API_PORT:-21121}"
     API_PORT="$go_port"
-    local go_svc="/etc/systemd/system/betterdesk-server.service"
+    local go_svc="/etc/systemd/system/sova-server.service"
 
     if [ -f "$go_svc" ] && grep -qE '\-api-port[[:space:]]+21121\b' "$go_svc" 2>/dev/null; then
         print_info "Migrating Go -api-port 21121 → $go_port (handlers on Go; clients stay on :$client_port proxy)"
@@ -3491,7 +3491,7 @@ ensure_api_compat_proxy_layout() {
 patch_service_definitions() {
     local changed=0
     local svc console_svc
-    for svc in /etc/systemd/system/betterdesk-server.service; do
+    for svc in /etc/systemd/system/sova-server.service; do
         [ -f "$svc" ] || continue
         local content new_content backup
         content=$(cat "$svc")
@@ -3509,10 +3509,10 @@ patch_service_definitions() {
         fi
     done
 
-    console_svc="/etc/systemd/system/betterdesk-console.service"
+    console_svc="/etc/systemd/system/sova-console.service"
     if [ -f "$console_svc" ]; then
         local console_user
-        console_user=$(ensure_betterdesk_console_user)
+        console_user=$(ensure_sova_console_user)
         repair_console_service_user_line "$console_user"
         local content new_content backup
         content=$(cat "$console_svc")
@@ -3521,21 +3521,21 @@ patch_service_definitions() {
             | sed 's|Environment=BETTERDESK_API_URL=https://localhost|Environment=BETTERDESK_API_URL=http://localhost|g')
         if [ "$console_user" != "root" ] && grep -q '^User=root' <<< "$new_content"; then
             new_content=$(printf '%s' "$new_content" | sed "s/^User=root/User=$console_user/")
-            print_info "Patched betterdesk-console.service (User=$console_user)"
+            print_info "Patched sova-console.service (User=$console_user)"
             changed=1
         fi
         local node_path
         node_path=$(command -v node 2>/dev/null || echo "/usr/bin/node")
         if ! grep -q '^ExecStartPre=.*linux-ensure-console-user' <<< "$new_content"; then
             new_content=$(printf '%s' "$new_content" | sed "s|^ExecStart=|ExecStartPre=+${node_path} ${CONSOLE_PATH}/scripts/linux-ensure-console-user.js\nExecStart=|")
-            print_info "Patched betterdesk-console.service (ExecStartPre permission sync)"
+            print_info "Patched sova-console.service (ExecStartPre permission sync)"
             changed=1
         fi
         if [ "$new_content" != "$content" ]; then
             backup="${console_svc}.bak.$(date +%Y%m%d%H%M%S)"
             cp "$console_svc" "$backup" 2>/dev/null || true
             printf '%s' "$new_content" > "$console_svc"
-            [ "$console_user" = "root" ] || print_info "Patched betterdesk-console.service (Go API URLs stay HTTP)"
+            [ "$console_user" = "root" ] || print_info "Patched sova-console.service (Go API URLs stay HTTP)"
             changed=1
         fi
     fi
@@ -3553,10 +3553,10 @@ patch_service_definitions() {
 maybe_update_services() {
     local mode="${1:-default}"
     local need_setup=false
-    if [ ! -f /etc/systemd/system/betterdesk-server.service ]; then
+    if [ ! -f /etc/systemd/system/sova-server.service ]; then
         need_setup=true
     fi
-    if [ -f "$CONSOLE_PATH/server.js" ] && [ ! -f /etc/systemd/system/betterdesk-console.service ]; then
+    if [ -f "$CONSOLE_PATH/server.js" ] && [ ! -f /etc/systemd/system/sova-console.service ]; then
         need_setup=true
     fi
     if [ "$need_setup" = true ]; then
@@ -3577,41 +3577,41 @@ maybe_update_services() {
     print_info "Service units present — patched in place (Repair → Repair services for full recreate)"
 }
 
-# Repair corrupted User= lines in betterdesk-console.service (#219).
+# Repair corrupted User= lines in sova-console.service (#219).
 # Command substitution must never capture repair warnings on stdout.
 repair_console_service_user_line() {
-    local want_user="${1:-betterdesk}"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local want_user="${1:-sova}"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local user_count valid_count
 
     [ -f "$svc_file" ] || return 0
 
     user_count=$(grep -c '^User=' "$svc_file" 2>/dev/null || echo 0)
-    valid_count=$(grep -cE "^User=(root|betterdesk)$" "$svc_file" 2>/dev/null || echo 0)
+    valid_count=$(grep -cE "^User=(root|sova)$" "$svc_file" 2>/dev/null || echo 0)
 
     if [ "$user_count" -eq 1 ] && [ "$valid_count" -eq 1 ]; then
         return 0
     fi
 
-    print_warning "Repairing invalid User= in betterdesk-console.service (#219)"
+    print_warning "Repairing invalid User= in sova-console.service (#219)"
     sed -i '/^User=/d' "$svc_file"
     sed -i "/^\[Service\]/a User=${want_user}" "$svc_file"
     systemctl daemon-reload 2>/dev/null || true
 }
 
 # Internal: permissions + optional LE repair (may print to stderr only).
-_sync_betterdesk_console_user_permissions() {
-    local svc_user="betterdesk"
+_sync_sova_console_user_permissions() {
+    local svc_user="sova"
 
     if ! id "$svc_user" &>/dev/null; then
-        useradd -r -s /usr/sbin/nologin -d /var/lib/betterdesk -c "BetterDesk web console" "$svc_user" 2>/dev/null \
+        useradd -r -s /usr/sbin/nologin -d /var/lib/sova -c "SoVa Desk web console" "$svc_user" 2>/dev/null \
             || print_warning "Could not create system user '$svc_user' — console will stay on root"
     fi
     if ! id "$svc_user" &>/dev/null; then
         return 1
     fi
 
-    mkdir -p /var/lib/betterdesk "$CONSOLE_PATH/data" "$RUSTDESK_PATH" "$RUSTDESK_PATH/ssl"
+    mkdir -p /var/lib/sova "$CONSOLE_PATH/data" "$RUSTDESK_PATH" "$RUSTDESK_PATH/ssl"
     chown -R "$svc_user:$svc_user" "$CONSOLE_PATH" 2>/dev/null || true
     chown root:"$svc_user" "$RUSTDESK_PATH" 2>/dev/null || true
     chmod 2775 "$RUSTDESK_PATH" 2>/dev/null || true
@@ -3629,7 +3629,7 @@ _sync_betterdesk_console_user_permissions() {
             chmod g+rw "$RUSTDESK_PATH/$f" 2>/dev/null || true
         fi
     done
-    for f in ssl/betterdesk.crt ssl/betterdesk.key; do
+    for f in ssl/sova.crt ssl/sova.key; do
         if [ -e "$RUSTDESK_PATH/$f" ]; then
             chown root:"$svc_user" "$RUSTDESK_PATH/$f" 2>/dev/null || true
             chmod 640 "$RUSTDESK_PATH/$f" 2>/dev/null || true
@@ -3641,12 +3641,12 @@ _sync_betterdesk_console_user_permissions() {
 
 # Create a dedicated unprivileged user for the web console (audit H-7).
 # stdout must contain ONLY the username (used in command substitution).
-ensure_betterdesk_console_user() {
-    if ! _sync_betterdesk_console_user_permissions; then
+ensure_sova_console_user() {
+    if ! _sync_sova_console_user_permissions; then
         echo "root"
         return
     fi
-    echo "betterdesk"
+    echo "sova"
 }
 
 setup_services() {
@@ -3722,14 +3722,14 @@ setup_services() {
     local tls_arg=""
     local ssl_dir="$RUSTDESK_PATH/ssl"
     local tls_is_selfsigned=false
-    if [ -f "$ssl_dir/betterdesk.crt" ] && [ -f "$ssl_dir/betterdesk.key" ]; then
+    if [ -f "$ssl_dir/sova.crt" ] && [ -f "$ssl_dir/sova.key" ]; then
         # Check if certificate is self-signed (issuer == subject after stripping prefix)
         local cert_issuer cert_subject
-        cert_issuer=$(openssl x509 -in "$ssl_dir/betterdesk.crt" -noout -issuer 2>/dev/null | sed 's/^issuer[= ]*//' || echo "")
-        cert_subject=$(openssl x509 -in "$ssl_dir/betterdesk.crt" -noout -subject 2>/dev/null | sed 's/^subject[= ]*//' || echo "")
+        cert_issuer=$(openssl x509 -in "$ssl_dir/sova.crt" -noout -issuer 2>/dev/null | sed 's/^issuer[= ]*//' || echo "")
+        cert_subject=$(openssl x509 -in "$ssl_dir/sova.crt" -noout -subject 2>/dev/null | sed 's/^subject[= ]*//' || echo "")
         if [ -n "$cert_issuer" ] && [ "$cert_issuer" = "$cert_subject" ]; then
             tls_is_selfsigned=true
-        elif echo "$cert_subject" | grep -qi "BetterDesk"; then
+        elif echo "$cert_subject" | grep -qi "SoVa Desk"; then
             tls_is_selfsigned=true
         fi
         
@@ -3737,7 +3737,7 @@ setup_services() {
         # API port (21121) MUST stay HTTP — RustDesk desktop clients send plain HTTP
         # to the configured API server URL and do not support HTTPS for API endpoints
         # (heartbeat, sysinfo, login, ab). Enabling -tls-api breaks all clients.
-        tls_arg="-tls-cert $ssl_dir/betterdesk.crt -tls-key $ssl_dir/betterdesk.key -tls-signal -tls-relay"
+        tls_arg="-tls-cert $ssl_dir/sova.crt -tls-key $ssl_dir/sova.key -tls-signal -tls-relay"
         
         if [ "$tls_is_selfsigned" = false ]; then
             print_info "TLS: Enabled for signal/relay (proper certificate found, API stays HTTP)"
@@ -3748,7 +3748,7 @@ setup_services() {
         print_info "TLS: Disabled (no certificate found)"
     fi
     
-    # BetterDesk Go Server (single binary replacing hbbs+hbbr)
+    # SoVa Desk Go Server (single binary replacing hbbs+hbbr)
     # Generate shared API key for Node.js ↔ Go server communication (preserve existing)
     local api_key
     if [ -f "$RUSTDESK_PATH/.api_key" ] && [ -s "$RUSTDESK_PATH/.api_key" ]; then
@@ -3775,9 +3775,9 @@ setup_services() {
     local systemd_db_arg="$db_arg"
     systemd_db_arg=$(printf '%s' "$systemd_db_arg" | sed 's/\$/\$\$/g; s/%/%%/g')
     
-    cat > /etc/systemd/system/betterdesk-server.service << EOF
+    cat > /etc/systemd/system/sova-server.service << EOF
 [Unit]
-Description=BetterDesk Go Server v$VERSION (Signal + Relay + API)
+Description=SoVa Desk Go Server v$VERSION (Signal + Relay + API)
 Documentation=https://github.com/UNITRONIX/Rustdesk-FreeConsole
 After=network.target postgresql.service
 
@@ -3792,7 +3792,7 @@ Environment=SIGNAL_PORT=21116
 Environment=RELAY_PORT=21117
 Environment=GO_API_PORT=${GO_API_PORT:-21114}
 $CONNECTION_MODE_ENV_BLOCK
-ExecStart=$RUSTDESK_PATH/betterdesk-server -mode all -relay-servers $server_ip $systemd_db_arg -key-file $RUSTDESK_PATH/id_ed25519 -api-port $API_PORT -signal-rate-limit-per-ip $signal_rate_limit $init_admin_arg $tls_arg
+ExecStart=$RUSTDESK_PATH/sova-server -mode all -relay-servers $server_ip $systemd_db_arg -key-file $RUSTDESK_PATH/id_ed25519 -api-port $API_PORT -signal-rate-limit-per-ip $signal_rate_limit $init_admin_arg $tls_arg
 Restart=always
 RestartSec=5
 LimitNOFILE=1000000
@@ -3801,7 +3801,7 @@ LimitNOFILE=1000000
 WantedBy=multi-user.target
 EOF
 
-    print_success "Created betterdesk-server.service (Go)"
+    print_success "Created sova-server.service (Go)"
     
     # Remove legacy Rust services if they exist
     if [ -f /etc/systemd/system/rustdesksignal.service ]; then
@@ -3818,20 +3818,20 @@ EOF
         print_info "Removed legacy rustdeskrelay.service"
     fi
     
-    # Remove legacy Flask betterdesk-api.service (deprecated in v2.3.0)
-    if [ -f /etc/systemd/system/betterdesk-api.service ]; then
-        systemctl stop betterdesk-api 2>/dev/null || true
-        systemctl disable betterdesk-api 2>/dev/null || true
-        rm -f /etc/systemd/system/betterdesk-api.service
-        print_info "Removed legacy betterdesk-api.service (Flask)"
+    # Remove legacy Flask sova-api.service (deprecated in v2.3.0)
+    if [ -f /etc/systemd/system/sova-api.service ]; then
+        systemctl stop sova-api 2>/dev/null || true
+        systemctl disable sova-api 2>/dev/null || true
+        rm -f /etc/systemd/system/sova-api.service
+        print_info "Removed legacy sova-api.service (Flask)"
     fi
     
-    # Remove stale betterdesk-go.service (manual installs, wrong credentials)
-    if [ -f /etc/systemd/system/betterdesk-go.service ]; then
-        systemctl stop betterdesk-go 2>/dev/null || true
-        systemctl disable betterdesk-go 2>/dev/null || true
-        rm -f /etc/systemd/system/betterdesk-go.service
-        print_info "Removed stale betterdesk-go.service"
+    # Remove stale sova-go.service (manual installs, wrong credentials)
+    if [ -f /etc/systemd/system/sova-go.service ]; then
+        systemctl stop sova-go 2>/dev/null || true
+        systemctl disable sova-go 2>/dev/null || true
+        rm -f /etc/systemd/system/sova-go.service
+        print_info "Removed stale sova-go.service"
     fi
 
     # Console service (Web Interface) - Node.js only
@@ -3859,8 +3859,8 @@ Environment=DB_PATH=$RUSTDESK_PATH/db_v2.sqlite3"
                 local rustdesk_api_tls="auto"
                 [ "$tls_is_selfsigned" = true ] && rustdesk_api_tls="false"
             tls_env="Environment=HTTPS_ENABLED=true
-Environment=SSL_CERT_PATH=$ssl_dir/betterdesk.crt
-        Environment=SSL_KEY_PATH=$ssl_dir/betterdesk.key
+Environment=SSL_CERT_PATH=$ssl_dir/sova.crt
+        Environment=SSL_KEY_PATH=$ssl_dir/sova.key
         Environment=RUSTDESK_API_TLS=$rustdesk_api_tls"
         fi
         
@@ -3886,14 +3886,14 @@ Environment=SSL_CERT_PATH=$ssl_dir/betterdesk.crt
         fi
 
         local console_user
-        console_user=$(ensure_betterdesk_console_user)
+        console_user=$(ensure_sova_console_user)
         print_info "Web console service user: $console_user"
         
-        cat > /etc/systemd/system/betterdesk-console.service << EOF
+        cat > /etc/systemd/system/sova-console.service << EOF
 [Unit]
-Description=BetterDesk Web Console (Node.js)
+Description=SoVa Desk Web Console (Node.js)
 Documentation=https://github.com/UNITRONIX/Rustdesk-FreeConsole
-After=network.target betterdesk-server.service postgresql.service
+After=network.target sova-server.service postgresql.service
 
 [Service]
 Type=simple
@@ -3904,7 +3904,7 @@ ExecStartPre=+$node_path $CONSOLE_PATH/scripts/linux-ensure-console-user.js
 ExecStart=$node_path server.js
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=betterdesk-console
+SyslogIdentifier=sova-console
 Environment=NODE_ENV=production
 Environment=RUSTDESK_DIR=$RUSTDESK_PATH
 Environment=KEYS_PATH=$RUSTDESK_PATH
@@ -3912,7 +3912,7 @@ Environment=DATA_DIR=$CONSOLE_PATH/data
 $db_env
 Environment=HBBS_API_URL=$api_scheme://localhost:${GO_API_PORT:-21114}/api
 Environment=BETTERDESK_API_URL=$api_scheme://localhost:${GO_API_PORT:-21114}/api
-Environment=SERVER_BACKEND=betterdesk
+Environment=SERVER_BACKEND=sova
 Environment=API_ENABLED=true
 Environment=API_PORT=${CLIENT_API_PORT:-21121}
 Environment=RUSTDESK_API_PROXY=true
@@ -3922,29 +3922,29 @@ Environment=PORT=${console_http_port}
 ${console_https_port_env}
 Environment=HOST=0.0.0.0
 $tls_env
-$([ "$tls_is_selfsigned" = true ] && echo "Environment=NODE_EXTRA_CA_CERTS=$ssl_dir/betterdesk.crt" || true)
+$([ "$tls_is_selfsigned" = true ] && echo "Environment=NODE_EXTRA_CA_CERTS=$ssl_dir/sova.crt" || true)
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 EOF
-        print_success "Created betterdesk-console.service (Node.js)"
+        print_success "Created sova-console.service (Node.js)"
         repair_console_service_user_line "$console_user"
         
-        # Remove legacy betterdesk.service if exists
-        if [ -f /etc/systemd/system/betterdesk.service ]; then
-            systemctl stop betterdesk 2>/dev/null || true
-            systemctl disable betterdesk 2>/dev/null || true
-            rm -f /etc/systemd/system/betterdesk.service
-            print_info "Removed legacy betterdesk.service"
+        # Remove legacy sova.service if exists
+        if [ -f /etc/systemd/system/sova.service ]; then
+            systemctl stop sova 2>/dev/null || true
+            systemctl disable sova 2>/dev/null || true
+            rm -f /etc/systemd/system/sova.service
+            print_info "Removed legacy sova.service"
         fi
     fi
 
     systemctl daemon-reload
     
     print_success "Systemd services configured"
-    print_info "Services: betterdesk-server, betterdesk-console"
+    print_info "Services: sova-server, sova-console"
 }
 
 run_migrations() {
@@ -3955,7 +3955,7 @@ run_migrations() {
         
         # Export auto mode flag for migration scripts
         if [ "$AUTO_MODE" = true ]; then
-            export BETTERDESK_AUTO=1
+            export SOVA_AUTO=1
         fi
         
         for migration in v*.py; do
@@ -3968,7 +3968,7 @@ run_migrations() {
             fi
         done
         
-        unset BETTERDESK_AUTO
+        unset SOVA_AUTO
     fi
     
     print_success "Migrations completed"
@@ -4004,7 +4004,7 @@ create_admin_user() {
             cat > "$RUSTDESK_PATH/.admin_credentials" << CREDEOF
 Admin Username: admin
 Admin Password: $admin_password
-Generated by: BetterDesk installer
+Generated by: SoVa Desk installer
 Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 CREDEOF
             chmod 600 "$RUSTDESK_PATH/.admin_credentials"
@@ -4025,7 +4025,7 @@ start_services() {
 }
 
 #===============================================================================
-# BetterDesk Minimal Installation (Go server only, no web console)
+# SoVa Desk Minimal Installation (Go server only, no web console)
 #===============================================================================
 
 do_install_minimal() {
@@ -4033,7 +4033,7 @@ do_install_minimal() {
     echo -e "${WHITE}${BOLD}══════════ MINIMAL INSTALLATION (Server Only) ══════════${NC}"
     echo ""
     
-    print_info "BetterDesk Minimal installs the Go server binary only."
+    print_info "SoVa Desk Minimal installs the Go server binary only."
     print_info "No web console, no Node.js, no npm dependencies."
     print_info "Manage via REST API on port ${GO_API_PORT:-21114} or TCP admin console."
     echo ""
@@ -4041,7 +4041,7 @@ do_install_minimal() {
     detect_installation
     
     if [ "$INSTALL_STATUS" = "complete" ]; then
-        print_warning "BetterDesk is already installed!"
+        print_warning "SoVa Desk is already installed!"
         if [ "$AUTO_MODE" = false ]; then
             if ! confirm "Do you want to reinstall in Minimal mode?"; then
                 return
@@ -4086,34 +4086,34 @@ do_install_minimal() {
     # Configure firewall rules (signal + relay + API only, no console ports)
     print_step "Configuring firewall rules..."
     if command -v ufw >/dev/null 2>&1; then
-        ufw allow "${GO_API_PORT:-21114}/tcp" comment "BetterDesk Go API (default)" 2>/dev/null || true
-        ufw allow 21115/tcp comment "BetterDesk NAT" 2>/dev/null || true
-        ufw allow 21116/tcp comment "BetterDesk Signal TCP" 2>/dev/null || true
-        ufw allow 21116/udp comment "BetterDesk Signal UDP" 2>/dev/null || true
-        ufw allow 21117/tcp comment "BetterDesk Relay" 2>/dev/null || true
-        ufw allow 21118/tcp comment "BetterDesk WS Signal" 2>/dev/null || true
-        ufw allow 21119/tcp comment "BetterDesk WS Relay" 2>/dev/null || true
+        ufw allow "${GO_API_PORT:-21114}/tcp" comment "SoVa Desk Go API (default)" 2>/dev/null || true
+        ufw allow 21115/tcp comment "SoVa Desk NAT" 2>/dev/null || true
+        ufw allow 21116/tcp comment "SoVa Desk Signal TCP" 2>/dev/null || true
+        ufw allow 21116/udp comment "SoVa Desk Signal UDP" 2>/dev/null || true
+        ufw allow 21117/tcp comment "SoVa Desk Relay" 2>/dev/null || true
+        ufw allow 21118/tcp comment "SoVa Desk WS Signal" 2>/dev/null || true
+        ufw allow 21119/tcp comment "SoVa Desk WS Relay" 2>/dev/null || true
     fi
     
     # Start server
-    print_step "Starting BetterDesk server..."
+    print_step "Starting SoVa Desk server..."
     systemctl daemon-reload
-    systemctl start betterdesk-server.service 2>/dev/null || true
-    systemctl enable betterdesk-server.service 2>/dev/null || true
+    systemctl start sova-server.service 2>/dev/null || true
+    systemctl enable sova-server.service 2>/dev/null || true
     
     sleep 3
     
     # Verify
-    if systemctl is-active --quiet betterdesk-server.service; then
-        print_success "BetterDesk server is running"
+    if systemctl is-active --quiet sova-server.service; then
+        print_success "SoVa Desk server is running"
     else
-        print_error "BetterDesk server failed to start"
-        journalctl -u betterdesk-server.service --no-pager -n 20
+        print_error "SoVa Desk server failed to start"
+        journalctl -u sova-server.service --no-pager -n 20
         return 1
     fi
     
     echo ""
-    print_success "===== BETTERDESK MINIMAL INSTALLATION COMPLETE ====="
+    print_success "===== SOVA MINIMAL INSTALLATION COMPLETE ====="
     echo ""
     
     local SERVER_IP
@@ -4130,9 +4130,9 @@ do_install_minimal() {
 }
 
 setup_services_minimal() {
-    print_step "Setting up BetterDesk server service (Minimal mode)..."
+    print_step "Setting up SoVa Desk server service (Minimal mode)..."
     
-    local GO_BINARY_PATH="$INSTALL_DIR/betterdesk-server"
+    local GO_BINARY_PATH="$INSTALL_DIR/sova-server"
     local KEY_DIR="$INSTALL_DIR"
     local DB_DIR="$INSTALL_DIR"
     
@@ -4166,8 +4166,8 @@ setup_services_minimal() {
     
     # TLS configuration — look for certificates in standard ssl/ directory
     local SSL_DIR="$INSTALL_DIR/ssl"
-    local TLS_CERT_PATH="$SSL_DIR/betterdesk.crt"
-    local TLS_KEY_PATH="$SSL_DIR/betterdesk.key"
+    local TLS_CERT_PATH="$SSL_DIR/sova.crt"
+    local TLS_KEY_PATH="$SSL_DIR/sova.key"
     
     # Also check legacy paths for backwards compatibility
     if [ ! -f "$TLS_CERT_PATH" ] && [ -f "$INSTALL_DIR/cert.pem" ]; then
@@ -4186,7 +4186,7 @@ setup_services_minimal() {
     fi
     
     # Remove old services (cleanup)
-    for old_svc in rustdesksignal rustdeskrelay betterdesk-api betterdesk-go betterdesk-console; do
+    for old_svc in rustdesksignal rustdeskrelay sova-api sova-go sova-console; do
         if systemctl is-active --quiet "$old_svc.service" 2>/dev/null; then
             systemctl stop "$old_svc.service" 2>/dev/null || true
         fi
@@ -4196,9 +4196,9 @@ setup_services_minimal() {
         fi
     done
     
-    cat > /etc/systemd/system/betterdesk-server.service <<EOF
+    cat > /etc/systemd/system/sova-server.service <<EOF
 [Unit]
-Description=BetterDesk Server (Minimal)
+Description=SoVa Desk Server (Minimal)
 After=network.target
 Wants=network-online.target
 
@@ -4224,14 +4224,14 @@ PrivateTmp=true
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=betterdesk-server
+SyslogIdentifier=sova-server
 
 [Install]
 WantedBy=multi-user.target
 EOF
     
     systemctl daemon-reload
-    print_success "BetterDesk server service created (Minimal mode)"
+    print_success "SoVa Desk server service created (Minimal mode)"
 }
 
 do_install() {
@@ -4242,7 +4242,7 @@ do_install() {
     detect_installation
     
     if [ "$INSTALL_STATUS" = "complete" ]; then
-        print_warning "BetterDesk is already installed!"
+        print_warning "SoVa Desk is already installed!"
         if [ "$AUTO_MODE" = false ]; then
             if ! confirm "Do you want to reinstall?"; then
                 return
@@ -4252,7 +4252,7 @@ do_install() {
     fi
     
     echo ""
-    print_info "Starting BetterDesk Console v$VERSION installation..."
+    print_info "Starting SoVa Desk Console v$VERSION installation..."
     echo ""
     
     # Choose database type (SQLite or PostgreSQL)
@@ -4296,18 +4296,18 @@ do_install() {
     sleep 2
     
     local go_state
-    go_state=$(systemctl show betterdesk-server --property=ActiveState --value 2>/dev/null || echo "unknown")
+    go_state=$(systemctl show sova-server --property=ActiveState --value 2>/dev/null || echo "unknown")
     if [ "$go_state" != "active" ]; then
-        print_error "betterdesk-server is $go_state (expected: active)"
-        print_info "Debug: journalctl -u betterdesk-server -n 30 --no-pager"
+        print_error "sova-server is $go_state (expected: active)"
+        print_info "Debug: journalctl -u sova-server -n 30 --no-pager"
         install_ok=false
     fi
     
     local console_state
-    console_state=$(systemctl show betterdesk-console --property=ActiveState --value 2>/dev/null || echo "unknown")
+    console_state=$(systemctl show sova-console --property=ActiveState --value 2>/dev/null || echo "unknown")
     if [ "$console_state" != "active" ]; then
-        print_warning "betterdesk-console is $console_state (expected: active)"
-        print_info "Debug: journalctl -u betterdesk-console -n 30 --no-pager"
+        print_warning "sova-console is $console_state (expected: active)"
+        print_info "Debug: journalctl -u sova-console -n 30 --no-pager"
         install_ok=false
     fi
     
@@ -4333,7 +4333,7 @@ do_install() {
     fi
     
     local tls_status="Disabled"
-    if [ -f "$RUSTDESK_PATH/ssl/betterdesk.crt" ] && [ -f "$RUSTDESK_PATH/ssl/betterdesk.key" ]; then
+    if [ -f "$RUSTDESK_PATH/ssl/sova.crt" ] && [ -f "$RUSTDESK_PATH/ssl/sova.key" ]; then
         tls_status="Self-signed (auto-generated)"
     fi
     
@@ -4353,7 +4353,7 @@ do_install() {
         echo ""
         print_info "Production TLS options:"
         print_info "  • External reverse proxy (Caddy/Nginx on :443) — recommended when a proxy already handles certificates"
-        print_info "  • Enterprise TLS (Option 5 in SSL menu) — BetterDesk-native HTTPS on panel + signal/relay"
+        print_info "  • Enterprise TLS (Option 5 in SSL menu) — SoVa Desk-native HTTPS on panel + signal/relay"
         echo ""
         if confirm "Will TLS terminate at an external reverse proxy (Caddy/Nginx)?"; then
             do_configure_reverse_proxy || true
@@ -4373,9 +4373,9 @@ do_install() {
 
 # GitHub repository configuration for online updates
 UPDATE_GITHUB_OWNER="${UPDATE_GITHUB_OWNER:-UNITRONIX}"
-UPDATE_GITHUB_REPO="${UPDATE_GITHUB_REPO:-BetterDesk}"
+UPDATE_GITHUB_REPO="${UPDATE_GITHUB_REPO:-SoVa Desk}"
 UPDATE_GITHUB_BRANCH="${UPDATE_GITHUB_BRANCH:-main}"
-UPDATE_CLONE_DIR="/tmp/betterdesk-update-$$"
+UPDATE_CLONE_DIR="/tmp/sova-update-$$"
 
 read_update_github_branch_from_env() {
     local env_file="${CONSOLE_PATH:-}/.env"
@@ -4416,7 +4416,7 @@ switch_update_channel() {
     echo ""
     detect_installation
     if [ "$INSTALL_STATUS" = "none" ]; then
-        print_error "BetterDesk is not installed!"
+        print_error "SoVa Desk is not installed!"
         press_enter
         return
     fi
@@ -4482,7 +4482,7 @@ update_from_github() {
     rm -rf "$clone_dir"
 
     # ---- Step 1: Clone or download latest code ----
-    print_step "Downloading latest BetterDesk from GitHub..."
+    print_step "Downloading latest SoVa Desk from GitHub..."
     if command -v git &>/dev/null; then
         local repo_url="https://github.com/${UPDATE_GITHUB_OWNER}/${UPDATE_GITHUB_REPO}.git"
         if ! git clone --depth 1 --single-branch --branch "$UPDATE_GITHUB_BRANCH" "$repo_url" "$clone_dir" 2>/dev/null; then
@@ -4494,7 +4494,7 @@ update_from_github() {
     else
         # Fallback: download tarball via curl
         local tarball_url="https://github.com/${UPDATE_GITHUB_OWNER}/${UPDATE_GITHUB_REPO}/archive/refs/heads/${UPDATE_GITHUB_BRANCH}.tar.gz"
-        local tarball_path="/tmp/betterdesk-update-$$.tar.gz"
+        local tarball_path="/tmp/sova-update-$$.tar.gz"
         print_info "git not available, downloading tarball..."
         if ! curl -fsSL --connect-timeout 15 --max-time 120 -o "$tarball_path" "$tarball_url"; then
             print_error "Download failed. Check internet connection."
@@ -4512,7 +4512,7 @@ update_from_github() {
     fi
 
     # Validate downloaded source
-    if [ ! -f "$clone_dir/betterdesk-server/go.mod" ] || [ ! -f "$clone_dir/web-nodejs/server.js" ]; then
+    if [ ! -f "$clone_dir/sova-server/go.mod" ] || [ ! -f "$clone_dir/web-nodejs/server.js" ]; then
         print_error "Downloaded source is incomplete or invalid"
         rm -rf "$clone_dir"
         return 1
@@ -4539,7 +4539,7 @@ update_from_github() {
     # leaving the old inconsistent source in place and breaking `go build`
     # with "undefined" errors (issue #158).
     mkdir -p "$GO_SERVER_SOURCE"
-    cp -rf "$clone_dir/betterdesk-server/." "$GO_SERVER_SOURCE/"
+    cp -rf "$clone_dir/sova-server/." "$GO_SERVER_SOURCE/"
 
     # Restore any local data/ directory that existed in the old source dir
     if [ -d "${GO_SERVER_SOURCE}.pre-update.$$/data" ]; then
@@ -4563,16 +4563,16 @@ update_from_github() {
         if compile_go_server; then
             print_success "Go server compiled successfully"
             # Deploy binary to installation path
-            if [ -f "$GO_SERVER_SOURCE/betterdesk-server" ]; then
+            if [ -f "$GO_SERVER_SOURCE/sova-server" ]; then
                 # Backup existing binary
-                if [ -f "$RUSTDESK_PATH/betterdesk-server" ]; then
-                    cp "$RUSTDESK_PATH/betterdesk-server" \
-                       "$RUSTDESK_PATH/betterdesk-server.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
+                if [ -f "$RUSTDESK_PATH/sova-server" ]; then
+                    cp "$RUSTDESK_PATH/sova-server" \
+                       "$RUSTDESK_PATH/sova-server.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
                 fi
-                kill_stale_processes "betterdesk-server"
+                kill_stale_processes "sova-server"
                 kill_processes_holding_ports
-                cp "$GO_SERVER_SOURCE/betterdesk-server" "$RUSTDESK_PATH/betterdesk-server"
-                chmod +x "$RUSTDESK_PATH/betterdesk-server"
+                cp "$GO_SERVER_SOURCE/sova-server" "$RUSTDESK_PATH/sova-server"
+                chmod +x "$RUSTDESK_PATH/sova-server"
                 print_success "Go server binary deployed to $RUSTDESK_PATH"
             fi
         else
@@ -4587,7 +4587,7 @@ update_from_github() {
 
     # Preserve critical local state files before overwriting
     local state_files=(".env" "data" "node_modules")
-    local preserved_dir="/tmp/betterdesk-console-state-$$"
+    local preserved_dir="/tmp/sova-console-state-$$"
     mkdir -p "$preserved_dir"
 
     for item in "${state_files[@]}"; do
@@ -4641,7 +4641,7 @@ update_from_github() {
     # Install npm dependencies if package.json changed
     print_step "Installing npm dependencies..."
     cd "$CONSOLE_PATH"
-    local npm_log="/tmp/betterdesk_npm_install.log"
+    local npm_log="/tmp/sova_npm_install.log"
     if npm install --production --no-audit --no-fund > "$npm_log" 2>&1; then
         print_success "npm dependencies installed"
     else
@@ -4654,7 +4654,7 @@ update_from_github() {
     print_step "Staging support-agent source for Generator builds..."
     if stage_support_agent_source "$clone_dir"; then
         mkdir -p "$CONSOLE_PATH/data"
-        printf '{"reason":"betterdesk.sh update","at":"%s"}\n' \
+        printf '{"reason":"sova.sh update","at":"%s"}\n' \
             "$(date -Iseconds 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)" \
             > "$CONSOLE_PATH/data/.agent_rebuild_pending"
         print_info "Generator bundles will rebuild after console restart"
@@ -4669,7 +4669,7 @@ update_from_github() {
     # ---- Step 4: Update installer scripts ----
     print_step "Updating installer scripts..."
     local scripts_updated=0
-    for script_file in betterdesk.sh betterdesk.ps1 betterdesk-docker.sh \
+    for script_file in sova.sh sova.ps1 sova-docker.sh \
                        docker-compose.yml docker-compose.single.yml docker-compose.quick.yml \
                        docker-compose.quick.single.yml docker-compose.quick.single.macvlan.yml \
                        Dockerfile Dockerfile.server Dockerfile.console VERSION; do
@@ -4713,41 +4713,41 @@ update_from_github() {
     return 0
 }
 
-# After update replaces betterdesk.sh on disk, re-exec so Repair / Protocol Toggle
+# After update replaces sova.sh on disk, re-exec so Repair / Protocol Toggle
 # use the new functions (bash keeps the old script in memory otherwise) (#219).
 reexec_installer_after_update() {
     if [ "${AUTO_MODE:-false}" = "true" ]; then
         return 0
     fi
-    if [ "${BETTERDESK_REEXECED:-}" = "1" ]; then
+    if [ "${SOVA_REEXECED:-}" = "1" ]; then
         return 0
     fi
-    local self="${SCRIPT_DIR}/betterdesk.sh"
+    local self="${SCRIPT_DIR}/sova.sh"
     if [ ! -f "$self" ]; then
         self="${BASH_SOURCE[0]}"
     fi
-    print_info "Reloading installer so the next menu action uses the updated betterdesk.sh (#219)"
+    print_info "Reloading installer so the next menu action uses the updated sova.sh (#219)"
     press_enter
-    exec env BETTERDESK_REEXECED=1 bash "$self" "${BETTERDESK_ORIG_ARGV[@]}"
+    exec env SOVA_REEXECED=1 bash "$self" "${SOVA_ORIG_ARGV[@]}"
 }
 
-# If Update already wrote a newer betterdesk.sh, re-exec before Repair/Toggle (#219).
+# If Update already wrote a newer sova.sh, re-exec before Repair/Toggle (#219).
 maybe_reexec_if_installer_on_disk_is_newer() {
     if [ "${AUTO_MODE:-false}" = "true" ]; then
         return 0
     fi
-    if [ "${BETTERDESK_REEXECED:-}" = "1" ]; then
+    if [ "${SOVA_REEXECED:-}" = "1" ]; then
         return 0
     fi
-    local self="${SCRIPT_DIR}/betterdesk.sh"
+    local self="${SCRIPT_DIR}/sova.sh"
     [ -f "$self" ] || return 0
     local disk_rev
-    disk_rev=$(grep -m1 '^BETTERDESK_SH_REVISION=' "$self" 2>/dev/null | cut -d= -f2- | tr -d "\"'[:space:]")
-    if [ -z "$disk_rev" ] || [ "$disk_rev" = "${BETTERDESK_SH_REVISION:-}" ]; then
+    disk_rev=$(grep -m1 '^SOVA_SH_REVISION=' "$self" 2>/dev/null | cut -d= -f2- | tr -d "\"'[:space:]")
+    if [ -z "$disk_rev" ] || [ "$disk_rev" = "${SOVA_SH_REVISION:-}" ]; then
         return 0
     fi
     print_info "Installer on disk is newer (revision $disk_rev) — reloading before this action (#219)"
-    exec env BETTERDESK_REEXECED=1 bash "$self" "${BETTERDESK_ORIG_ARGV[@]}"
+    exec env SOVA_REEXECED=1 bash "$self" "${SOVA_ORIG_ARGV[@]}"
 }
 
 do_update() {
@@ -4758,7 +4758,7 @@ do_update() {
     detect_installation
     
     if [ "$INSTALL_STATUS" = "none" ]; then
-        print_error "BetterDesk is not installed!"
+        print_error "SoVa Desk is not installed!"
         print_info "Use 'FRESH INSTALLATION' option"
         press_enter
         return
@@ -4898,15 +4898,15 @@ do_update() {
     # Start services with verification (#306 — do not claim success if Console is down)
     if ! start_services_with_verification; then
         print_error "Update files applied but services did not start correctly"
-        print_info "Fix Console with: sudo systemctl start betterdesk-console"
-        print_info "Logs: journalctl -u betterdesk-console -n 50 --no-pager"
+        print_info "Fix Console with: sudo systemctl start sova-console"
+        print_info "Logs: journalctl -u sova-console -n 50 --no-pager"
         press_enter
         return 1
     fi
     
     print_success "Update completed!"
     if [ -n "${remote_version:-}" ]; then
-        print_info "BetterDesk is now at version $remote_version"
+        print_info "SoVa Desk is now at version $remote_version"
     fi
     reexec_installer_after_update
 }
@@ -4930,7 +4930,7 @@ do_repair() {
     print_status
     
     local _menu_items=(
-        $'Repair binaries\tReplace the server binary with BetterDesk Go'
+        $'Repair binaries\tReplace the server binary with SoVa Desk Go'
         $'Repair database\tAdd missing columns / run migrations'
         $'Repair services\tRegenerate systemd service units'
         $'Repair permissions\tFix file ownership and permissions'
@@ -4963,11 +4963,11 @@ do_repair() {
 }
 
 repair_binaries() {
-    print_step "Repairing BetterDesk Go Server..."
+    print_step "Repairing SoVa Desk Go Server..."
     
     detect_architecture
     
-    local go_binary="$GO_SERVER_SOURCE/betterdesk-server"
+    local go_binary="$GO_SERVER_SOURCE/sova-server"
     
     # Check if Go binary exists, or compile it
     if [ ! -f "$go_binary" ]; then
@@ -4988,8 +4988,8 @@ repair_binaries() {
     fi
     
     # Create backup before repair
-    if [ -f "$RUSTDESK_PATH/betterdesk-server" ]; then
-        cp "$RUSTDESK_PATH/betterdesk-server" "$RUSTDESK_PATH/betterdesk-server.backup.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
+    if [ -f "$RUSTDESK_PATH/sova-server" ]; then
+        cp "$RUSTDESK_PATH/sova-server" "$RUSTDESK_PATH/sova-server.backup.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
     fi
     
     # Gracefully stop all services
@@ -4999,9 +4999,9 @@ repair_binaries() {
     sleep 2
     
     # Check if binary is still locked (Text file busy prevention)
-    if lsof "$RUSTDESK_PATH/betterdesk-server" 2>/dev/null | grep -q .; then
-        print_error "betterdesk-server binary is still in use!"
-        kill_stale_processes "betterdesk-server"
+    if lsof "$RUSTDESK_PATH/sova-server" 2>/dev/null | grep -q .; then
+        print_error "sova-server binary is still in use!"
+        kill_stale_processes "sova-server"
         sleep 2
     fi
     
@@ -5074,15 +5074,15 @@ repair_services() {
     graceful_stop_services
     
     # Backup existing service files
-    for svc in betterdesk-server betterdesk-console rustdesksignal rustdeskrelay betterdesk; do
+    for svc in sova-server sova-console rustdesksignal rustdeskrelay sova; do
         if [ -f "/etc/systemd/system/${svc}.service" ]; then
             cp "/etc/systemd/system/${svc}.service" "/etc/systemd/system/${svc}.service.backup.$(date +%Y%m%d%H%M%S)" 2>/dev/null || true
         fi
     done
     
     # Verify Go server binary exists
-    if [ ! -f "$RUSTDESK_PATH/betterdesk-server" ]; then
-        print_error "betterdesk-server binary not found at $RUSTDESK_PATH/betterdesk-server"
+    if [ ! -f "$RUSTDESK_PATH/sova-server" ]; then
+        print_error "sova-server binary not found at $RUSTDESK_PATH/sova-server"
         print_info "Run 'Repair binaries' first"
         return 1
     fi
@@ -5095,7 +5095,7 @@ repair_services() {
         print_error "Services failed to start after repair"
         print_info "Restoring backup service files..."
         
-        for svc in betterdesk-server betterdesk-console; do
+        for svc in sova-server sova-console; do
             backup_file=$(ls -t /etc/systemd/system/${svc}.service.backup.* 2>/dev/null | head -1)
             if [ -n "$backup_file" ]; then
                 cp "$backup_file" "/etc/systemd/system/${svc}.service"
@@ -5114,7 +5114,7 @@ repair_permissions() {
 
     if [ -f "$CONSOLE_PATH/server.js" ]; then
         local console_user
-        console_user=$(ensure_betterdesk_console_user)
+        console_user=$(ensure_sova_console_user)
         print_info "Console tree owner: $console_user"
         if [ -f "$CONSOLE_PATH/scripts/linux-ensure-console-user.js" ] && command -v node &>/dev/null; then
             if [ "$(id -u)" -eq 0 ]; then
@@ -5129,15 +5129,15 @@ repair_permissions() {
         ensure_console_tls_material_readable 2>/dev/null || true
     fi
 
-    chmod +x "$RUSTDESK_PATH/betterdesk-server" 2>/dev/null || true
+    chmod +x "$RUSTDESK_PATH/sova-server" 2>/dev/null || true
 
-    if systemctl is-enabled --quiet betterdesk-console 2>/dev/null; then
-        systemctl restart betterdesk-console 2>/dev/null || true
+    if systemctl is-enabled --quiet sova-console 2>/dev/null; then
+        systemctl restart sova-console 2>/dev/null || true
         sleep 2
-        if systemctl is-active --quiet betterdesk-console 2>/dev/null; then
+        if systemctl is-active --quiet sova-console 2>/dev/null; then
             print_success "Permissions repaired — console is running"
         else
-            print_warning "Permissions synced but console still inactive — check: journalctl -u betterdesk-console -n 40 --no-pager"
+            print_warning "Permissions synced but console still inactive — check: journalctl -u sova-console -n 40 --no-pager"
         fi
     else
         print_success "Permissions repaired"
@@ -5149,14 +5149,14 @@ repair_https_tls() {
 
     repair_https_stuck_state
 
-    if confirm "Restart BetterDesk services now?"; then
-        systemctl restart betterdesk-server betterdesk-console 2>/dev/null || true
-        verify_service_health "betterdesk-server" "21116" 15 >/dev/null 2>&1 || true
-        verify_service_health "betterdesk-console" "$(resolve_panel_health_port)" 15 >/dev/null 2>&1 || true
-        print_success "BetterDesk services restarted"
+    if confirm "Restart SoVa Desk services now?"; then
+        systemctl restart sova-server sova-console 2>/dev/null || true
+        verify_service_health "sova-server" "21116" 15 >/dev/null 2>&1 || true
+        verify_service_health "sova-console" "$(resolve_panel_health_port)" 15 >/dev/null 2>&1 || true
+        print_success "SoVa Desk services restarted"
         run_protocol_tests
     else
-        print_info "Repair saved. Restart later: systemctl restart betterdesk-server betterdesk-console"
+        print_info "Repair saved. Restart later: systemctl restart sova-server sova-console"
     fi
 }
 
@@ -5196,8 +5196,8 @@ do_validate() {
     fi
     
     # Check Go server binary
-    echo -n "  BetterDesk Server (Go): "
-    if [ -x "$RUSTDESK_PATH/betterdesk-server" ]; then
+    echo -n "  SoVa Desk Server (Go): "
+    if [ -x "$RUSTDESK_PATH/sova-server" ]; then
         echo -e "${GREEN}✓ Single binary (signal + relay + API)${NC}"
     elif [ -x "$RUSTDESK_PATH/hbbs" ] && [ -x "$RUSTDESK_PATH/hbbr" ]; then
         echo -e "${YELLOW}! Legacy Rust binaries (consider upgrading to Go)${NC}"
@@ -5263,7 +5263,7 @@ do_validate() {
         fi
     else
         # Check if Go server is running — it creates the DB on start
-        if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+        if systemctl is-active --quiet sova-server 2>/dev/null; then
             echo -e "${YELLOW}! SQLite file not yet created (server running, will create on first connection)${NC}"
             warnings=$((warnings + 1))
         else
@@ -5287,13 +5287,13 @@ do_validate() {
     echo ""
     
     # Check Go server service first
-    echo -n "  betterdesk-server (Go): "
-    if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+    echo -n "  sova-server (Go): "
+    if systemctl is-active --quiet sova-server 2>/dev/null; then
         echo -e "${GREEN}● Active (signal + relay + API)${NC}"
-    elif systemctl is-enabled --quiet betterdesk-server 2>/dev/null; then
+    elif systemctl is-enabled --quiet sova-server 2>/dev/null; then
         echo -e "${YELLOW}○ Enabled but inactive${NC}"
         warnings=$((warnings + 1))
-    elif systemctl list-unit-files betterdesk-server.service &>/dev/null 2>&1; then
+    elif systemctl list-unit-files sova-server.service &>/dev/null 2>&1; then
         echo -e "${RED}○ Disabled${NC}"
         errors=$((errors + 1))
     else
@@ -5314,12 +5314,12 @@ do_validate() {
         done
     fi
     
-    echo -n "  betterdesk-console (Node.js): "
-    if systemctl is-active --quiet betterdesk-console 2>/dev/null; then
+    echo -n "  sova-console (Node.js): "
+    if systemctl is-active --quiet sova-console 2>/dev/null; then
         echo -e "${GREEN}● Active${NC}"
-    elif systemctl is-active --quiet betterdesk 2>/dev/null; then
+    elif systemctl is-active --quiet sova 2>/dev/null; then
         echo -e "${GREEN}● Active (legacy name)${NC}"
-    elif systemctl is-enabled --quiet betterdesk-console 2>/dev/null; then
+    elif systemctl is-enabled --quiet sova-console 2>/dev/null; then
         echo -e "${YELLOW}○ Enabled but inactive${NC}"
         warnings=$((warnings + 1))
     else
@@ -5376,7 +5376,7 @@ do_backup() {
 }
 
 do_backup_silent() {
-    local backup_name="betterdesk_backup_$(date +%Y%m%d_%H%M%S)"
+    local backup_name="sova_backup_$(date +%Y%m%d_%H%M%S)"
     local backup_path="$BACKUP_DIR/$backup_name"
     
     mkdir -p "$backup_path"
@@ -5482,7 +5482,7 @@ do_reset_password() {
             if grep -q 'const health = await checkGoServerHealth' "$auth_service" 2>/dev/null; then
                 print_warning "Detected broken authentication flow (Go-first delegation bug)"
                 print_info "Downloading fixed authService.js from GitHub..."
-                local fixed_url="https://raw.githubusercontent.com/UNITRONIX/BetterDesk/main/web-nodejs/services/authService.js"
+                local fixed_url="https://raw.githubusercontent.com/UNITRONIX/SoVa Desk/main/web-nodejs/services/authService.js"
                 if curl -fsSL "$fixed_url" -o "$auth_service.tmp" 2>/dev/null; then
                     # Verify the fix was downloaded correctly (check for local-first pattern)
                     if grep -q 'Step 1: Check local database FIRST' "$auth_service.tmp" 2>/dev/null; then
@@ -5637,9 +5637,9 @@ PYEOF
         fi
         
         # Restart console so it picks up the new .env value
-        if systemctl is-active betterdesk-console &>/dev/null; then
-            print_info "Restarting betterdesk-console..."
-            systemctl restart betterdesk-console 2>/dev/null || true
+        if systemctl is-active sova-console &>/dev/null; then
+            print_info "Restarting sova-console..."
+            systemctl restart sova-console 2>/dev/null || true
             sleep 2
         fi
         
@@ -5655,7 +5655,7 @@ PYEOF
             cat > "$RUSTDESK_PATH/.admin_credentials" << CREDEOF
 Admin Username: admin
 Admin Password: $new_password
-Generated by: BetterDesk password reset
+Generated by: SoVa Desk password reset
 Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 CREDEOF
             chmod 600 "$RUSTDESK_PATH/.admin_credentials"
@@ -5677,16 +5677,16 @@ CREDEOF
 # without a full git checkout on the production host.
 stage_support_agent_source() {
     local repo_root="${1:-$SCRIPT_DIR}"
-    local console_path="${CONSOLE_PATH:-/opt/BetterDeskConsole}"
+    local console_path="${CONSOLE_PATH:-/srv/sova-desk/web-console}"
     local base="$console_path/agent-source"
     local build_user="${SUDO_USER:-${BUILD_USER:-unitronix}}"
 
-    local support_src="$repo_root/betterdesk-support-agent"
-    local agent_lib_src="$repo_root/betterdesk-agent"
-    local server_lib_src="$repo_root/betterdesk-server"
-    local support_dst="$base/betterdesk-support-agent"
-    local agent_lib_dst="$base/betterdesk-agent"
-    local server_lib_dst="$base/betterdesk-server"
+    local support_src="$repo_root/sova-support-agent"
+    local agent_lib_src="$repo_root/sova-agent"
+    local server_lib_src="$repo_root/sova-server"
+    local support_dst="$base/sova-support-agent"
+    local agent_lib_dst="$base/sova-agent"
+    local server_lib_dst="$base/sova-server"
 
     if [ ! -f "$support_src/build.sh" ]; then
         print_warning "Support agent source not found: $support_src (Generator builds will fail)"
@@ -5739,7 +5739,7 @@ do_install_build_toolchain() {
     echo "            rpm-build, appimagetool, pnpm, WebKit dev libs."
     echo ""
     echo "  Disk:  ~3 GB download, ~5 GB after install,"
-    echo "         plus cargo build cache (/var/cache/betterdesk-build)."
+    echo "         plus cargo build cache (/var/cache/sova-build)."
     echo ""
     echo "  This is REQUIRED for the 'Generator Agenta' feature."
     echo "  Skip if you do not generate branded agent installers."
@@ -5777,7 +5777,7 @@ do_install_build_toolchain() {
         stage_support_agent_source "$script_dir" || true
         print_success "Build toolchain installed."
         print_info "Restart the console service to pick up new PATH:"
-        print_info "  sudo systemctl restart betterdesk-console"
+        print_info "  sudo systemctl restart sova-console"
     else
         print_error "Toolchain installer exited with code $rc"
     fi
@@ -5793,7 +5793,7 @@ do_build() {
         $'Back\tReturn to the main menu'
     )
     local _menu_returns=( 1 2 3 0 )
-    menu_choose "Build & Deploy" "Rebuild and deploy the BetterDesk Go server"
+    menu_choose "Build & Deploy" "Rebuild and deploy the SoVa Desk Go server"
     local build_choice="${MENU_CHOICE:-1}"
 
     case $build_choice in
@@ -5814,7 +5814,7 @@ do_rebuild_go_server() {
     detect_installation
 
     if [ "$INSTALL_STATUS" = "none" ]; then
-        print_warning "BetterDesk is not installed. Binary will be compiled but not deployed."
+        print_warning "SoVa Desk is not installed. Binary will be compiled but not deployed."
         if ! confirm "Continue with compilation only?"; then
             press_enter
             return
@@ -5833,7 +5833,7 @@ do_rebuild_go_server() {
         return
     fi
 
-    local new_binary="$GO_SERVER_SOURCE/betterdesk-server"
+    local new_binary="$GO_SERVER_SOURCE/sova-server"
     if [ ! -f "$new_binary" ]; then
         print_error "Compiled binary not found at $new_binary"
         press_enter
@@ -5842,7 +5842,7 @@ do_rebuild_go_server() {
 
     # Step 2: Backup current binary
     print_step "[2/5] Backing up current binary..."
-    local installed_binary="$RUSTDESK_PATH/betterdesk-server"
+    local installed_binary="$RUSTDESK_PATH/sova-server"
     local ts
     ts=$(date +%Y%m%d_%H%M%S)
     if [ -f "$installed_binary" ]; then
@@ -5869,12 +5869,12 @@ do_rebuild_go_server() {
     print_step "[5/5] Starting services..."
     start_services_with_verification
 
-    if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+    if systemctl is-active --quiet sova-server 2>/dev/null; then
         echo ""
         print_success "Go server rebuilt and deployed successfully!"
         echo ""
         echo -e "${WHITE}Recent logs:${NC}"
-        journalctl -u betterdesk-server -n 5 --no-pager 2>/dev/null || true
+        journalctl -u sova-server -n 5 --no-pager 2>/dev/null || true
     else
         print_error "Service failed to start after rebuild!"
         echo ""
@@ -5882,15 +5882,15 @@ do_rebuild_go_server() {
         if [ -f "${installed_binary}.backup.${ts}" ]; then
             cp "${installed_binary}.backup.${ts}" "$installed_binary"
             chmod +x "$installed_binary"
-            systemctl start betterdesk-server 2>/dev/null || true
+            systemctl start sova-server 2>/dev/null || true
             sleep 2
-            if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+            if systemctl is-active --quiet sova-server 2>/dev/null; then
                 print_success "Rollback successful — previous binary restored"
             else
-                print_error "Rollback also failed. Check: journalctl -u betterdesk-server -n 50"
+                print_error "Rollback also failed. Check: journalctl -u sova-server -n 50"
             fi
         else
-            print_error "No backup to rollback to. Check: journalctl -u betterdesk-server -n 50"
+            print_error "No backup to rollback to. Check: journalctl -u sova-server -n 50"
         fi
     fi
 
@@ -5911,7 +5911,7 @@ do_compile_go_only() {
         return
     fi
 
-    local new_binary="$GO_SERVER_SOURCE/betterdesk-server"
+    local new_binary="$GO_SERVER_SOURCE/sova-server"
     local size
     size=$(du -h "$new_binary" | cut -f1)
     print_success "Binary compiled: $new_binary ($size)"
@@ -5948,7 +5948,7 @@ do_build_legacy_rust() {
     print_info "Rust: $(cargo --version)"
     echo ""
 
-    local build_dir="/tmp/betterdesk_build_$$"
+    local build_dir="/tmp/sova_build_$$"
     mkdir -p "$build_dir"
     cd "$build_dir"
 
@@ -5957,7 +5957,7 @@ do_build_legacy_rust() {
     cd rustdesk-server
     git submodule update --init --recursive
 
-    print_step "Applying BetterDesk modifications..."
+    print_step "Applying SoVa Desk modifications..."
 
     # Copy modified sources
     if [ -d "$SCRIPT_DIR/hbbs-patch-v2/src" ]; then
@@ -6009,11 +6009,11 @@ configure_firewall_rules() {
             total=$((total + 1))
             if ! ufw status 2>/dev/null | grep -qE "^${port}[/ ]"; then
                 if [ "$port" = "21116" ]; then
-                    ufw allow 21116/tcp comment "BetterDesk ID Server TCP" 2>/dev/null && created=$((created + 1))
-                    ufw allow 21116/udp comment "BetterDesk ID Server UDP" 2>/dev/null && created=$((created + 1))
+                    ufw allow 21116/tcp comment "SoVa Desk ID Server TCP" 2>/dev/null && created=$((created + 1))
+                    ufw allow 21116/udp comment "SoVa Desk ID Server UDP" 2>/dev/null && created=$((created + 1))
                     total=$((total + 1))
                 else
-                    ufw allow "${port}/tcp" comment "BetterDesk port ${port}" 2>/dev/null && created=$((created + 1))
+                    ufw allow "${port}/tcp" comment "SoVa Desk port ${port}" 2>/dev/null && created=$((created + 1))
                 fi
             fi
         done
@@ -6090,9 +6090,9 @@ do_diagnostics() {
     echo ""
     
     # Check for Go server first, then legacy Rust services
-    if systemctl list-unit-files betterdesk-server.service &>/dev/null 2>&1; then
-        echo -e "${CYAN}--- betterdesk-server (Go) ---${NC}"
-        journalctl -u betterdesk-server -n 10 --no-pager 2>/dev/null || echo "No logs found"
+    if systemctl list-unit-files sova-server.service &>/dev/null 2>&1; then
+        echo -e "${CYAN}--- sova-server (Go) ---${NC}"
+        journalctl -u sova-server -n 10 --no-pager 2>/dev/null || echo "No logs found"
     else
         echo -e "${CYAN}--- rustdesksignal (Legacy Rust) ---${NC}"
         journalctl -u rustdesksignal -n 10 --no-pager 2>/dev/null || echo "No logs found"
@@ -6103,9 +6103,9 @@ do_diagnostics() {
     fi
     
     echo ""
-    echo -e "${CYAN}--- betterdesk-console (Node.js) ---${NC}"
-    journalctl -u betterdesk-console -n 10 --no-pager 2>/dev/null || \
-        journalctl -u betterdesk -n 10 --no-pager 2>/dev/null || echo "No logs found"
+    echo -e "${CYAN}--- sova-console (Node.js) ---${NC}"
+    journalctl -u sova-console -n 10 --no-pager 2>/dev/null || \
+        journalctl -u sova -n 10 --no-pager 2>/dev/null || echo "No logs found"
     
     echo ""
     echo -e "${WHITE}${BOLD}═══ Database statistics ═══${NC}"
@@ -6123,9 +6123,9 @@ do_diagnostics() {
         diag_pg_uri=$(grep -m1 '^DATABASE_URL=' "$CONSOLE_PATH/.env" 2>/dev/null | cut -d= -f2-)
     fi
     # The Go server may also carry the DSN in its systemd unit (-db postgres://...)
-    if [ "$diag_db_type" != "postgres" ] && [ -f /etc/systemd/system/betterdesk-server.service ]; then
+    if [ "$diag_db_type" != "postgres" ] && [ -f /etc/systemd/system/sova-server.service ]; then
         local svc_db
-        svc_db=$(grep -oP '\-db\s+"?\K(postgres|postgresql)://[^" ]+' /etc/systemd/system/betterdesk-server.service 2>/dev/null | head -1)
+        svc_db=$(grep -oP '\-db\s+"?\K(postgres|postgresql)://[^" ]+' /etc/systemd/system/sova-server.service 2>/dev/null | head -1)
         if [ -n "$svc_db" ]; then
             diag_db_type="postgres"
             diag_pg_uri="${diag_pg_uri:-$svc_db}"
@@ -6183,12 +6183,12 @@ do_diagnostics() {
     
     local port_issues=0
     local port_defs=(
-        "${GO_API_PORT:-21114}:TCP:betterdesk-serv|betterdesk-server|hbbs:Go HTTP API (handlers)"
+        "${GO_API_PORT:-21114}:TCP:sova-serv|sova-server|hbbs:Go HTTP API (handlers)"
         "${CLIENT_API_PORT:-21121}:TCP:node|MainThread:Client API compat proxy → Go"
-        "21115:TCP:betterdesk-serv|betterdesk-server|hbbs:NAT Test"
-        "21116:TCP:betterdesk-serv|betterdesk-server|hbbs:ID Server (TCP)"
-        "21116:UDP:betterdesk-serv|betterdesk-server|hbbs:ID Server (UDP)"
-        "21117:TCP:betterdesk-serv|betterdesk-server|hbbr:Relay Server"
+        "21115:TCP:sova-serv|sova-server|hbbs:NAT Test"
+        "21116:TCP:sova-serv|sova-server|hbbs:ID Server (TCP)"
+        "21116:UDP:sova-serv|sova-server|hbbs:ID Server (UDP)"
+        "21117:TCP:sova-serv|sova-server|hbbr:Relay Server"
         "5000:TCP:node|MainThread:Web Console"
     )
     
@@ -6309,7 +6309,7 @@ do_diagnostics() {
     # Detect if Go server API uses TLS (only if explicit --tls-api in service args)
     local api_use_tls=false
     local api_scheme="http"
-    if systemctl cat betterdesk-server.service 2>/dev/null | grep -qE '\-tls-api'; then
+    if systemctl cat sova-server.service 2>/dev/null | grep -qE '\-tls-api'; then
         api_use_tls=true
         api_scheme="https"
     fi
@@ -6325,7 +6325,7 @@ do_diagnostics() {
                 echo -e "  ${YELLOW}⚠ Note: Go server has TLS cert but API responds on HTTP${NC}"
             else
                 echo -e "${RED}UNREACHABLE${NC}"
-                echo -e "  ${YELLOW}Tip: Check betterdesk-server logs: journalctl -u betterdesk-server -n 20${NC}"
+                echo -e "  ${YELLOW}Tip: Check sova-server logs: journalctl -u sova-server -n 20${NC}"
             fi
         fi
     else
@@ -6347,8 +6347,8 @@ do_diagnostics() {
     if [ "$api_use_tls" = true ]; then
         local console_api_url=""
         # Check what URL the console is configured to use
-        if [ -f /etc/systemd/system/betterdesk-console.service ]; then
-            console_api_url=$(grep 'BETTERDESK_API_URL=' /etc/systemd/system/betterdesk-console.service 2>/dev/null | tail -1 | sed 's/.*BETTERDESK_API_URL=//')
+        if [ -f /etc/systemd/system/sova-console.service ]; then
+            console_api_url=$(grep 'BETTERDESK_API_URL=' /etc/systemd/system/sova-console.service 2>/dev/null | tail -1 | sed 's/.*BETTERDESK_API_URL=//')
         fi
         if [ -z "$console_api_url" ] && [ -f "$CONSOLE_PATH/.env" ]; then
             console_api_url=$(grep -m1 '^BETTERDESK_API_URL=' "$CONSOLE_PATH/.env" 2>/dev/null | cut -d= -f2-)
@@ -6415,7 +6415,7 @@ do_uninstall() {
     echo -e "${RED}${BOLD}══════════ UNINSTALL ══════════${NC}"
     echo ""
     
-    print_warning "This operation will remove BetterDesk Console!"
+    print_warning "This operation will remove SoVa Desk Console!"
     echo ""
     
     if ! confirm "Are you sure you want to continue?"; then
@@ -6428,22 +6428,22 @@ do_uninstall() {
     
     print_step "Stopping services..."
     # Stop Go server (primary)
-    systemctl stop betterdesk-server betterdesk-console 2>/dev/null || true
-    systemctl disable betterdesk-server betterdesk-console 2>/dev/null || true
+    systemctl stop sova-server sova-console 2>/dev/null || true
+    systemctl disable sova-server sova-console 2>/dev/null || true
     # Stop legacy Rust services if they exist
-    systemctl stop rustdesksignal rustdeskrelay betterdesk betterdesk-api betterdesk-go 2>/dev/null || true
-    systemctl disable rustdesksignal rustdeskrelay betterdesk betterdesk-api betterdesk-go 2>/dev/null || true
+    systemctl stop rustdesksignal rustdeskrelay sova sova-api sova-go 2>/dev/null || true
+    systemctl disable rustdesksignal rustdeskrelay sova sova-api sova-go 2>/dev/null || true
     
     print_step "Removing service files..."
     # Remove Go services
-    rm -f /etc/systemd/system/betterdesk-server.service
-    rm -f /etc/systemd/system/betterdesk-console.service
+    rm -f /etc/systemd/system/sova-server.service
+    rm -f /etc/systemd/system/sova-console.service
     # Remove legacy services
     rm -f /etc/systemd/system/rustdesksignal.service
     rm -f /etc/systemd/system/rustdeskrelay.service
-    rm -f /etc/systemd/system/betterdesk.service
-    rm -f /etc/systemd/system/betterdesk-api.service
-    rm -f /etc/systemd/system/betterdesk-go.service
+    rm -f /etc/systemd/system/sova.service
+    rm -f /etc/systemd/system/sova-api.service
+    rm -f /etc/systemd/system/sova-go.service
     systemctl daemon-reload
     
     if confirm "Remove installation files ($RUSTDESK_PATH)?"; then
@@ -6456,7 +6456,7 @@ do_uninstall() {
         print_info "Removed: $CONSOLE_PATH"
     fi
     
-    print_success "BetterDesk has been uninstalled"
+    print_success "SoVa Desk has been uninstalled"
     press_enter
 }
 
@@ -6472,14 +6472,14 @@ do_configure_ssl() {
 
     if [ ! -f "$CONSOLE_PATH/.env" ]; then
         print_error "Node.js console .env not found at $CONSOLE_PATH/.env"
-        print_info "Please install BetterDesk first (option 1)"
+        print_info "Please install SoVa Desk first (option 1)"
         press_enter
         return
     fi
 
     local ssl_dir="$RUSTDESK_PATH/ssl"
     local env_file="$CONSOLE_PATH/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
     local ssl_tls_active="no"
 
     local _menu_items=(
@@ -6497,7 +6497,7 @@ do_configure_ssl() {
     case "${ssl_choice:-1}" in
         1)
             echo ""
-            read -p "Enter your domain name (e.g., betterdesk.example.com): " domain
+            read -p "Enter your domain name (e.g., sova.example.com): " domain
             if [ -z "$domain" ]; then
                 print_error "Domain name required for Let's Encrypt"
                 press_enter
@@ -6536,7 +6536,7 @@ do_configure_ssl() {
                 return
             fi
 
-            apply_console_protocol_mode https "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" true false
+            apply_console_protocol_mode https "$ssl_dir/sova.crt" "$ssl_dir/sova.key" true false
             ssl_tls_active="yes"
 
             if ! crontab -l 2>/dev/null | grep -q "certbot renew"; then
@@ -6578,8 +6578,8 @@ do_configure_ssl() {
             fi
             [ -n "$merged_crt" ] && rm -f "$merged_crt"
 
-            infer_tls_mode_from_cert "$ssl_dir/betterdesk.crt"
-            apply_console_protocol_mode https "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" \
+            infer_tls_mode_from_cert "$ssl_dir/sova.crt"
+            apply_console_protocol_mode https "$ssl_dir/sova.crt" "$ssl_dir/sova.key" \
                 "$INFERRED_RUSTDESK_API_TLS" "$INFERRED_ALLOW_SELF_SIGNED"
             if [ -n "$ca_path" ] && [ -f "$ca_path" ]; then
                 _upsert_env_line "$env_file" SSL_CA_PATH "$ca_path"
@@ -6604,25 +6604,25 @@ do_configure_ssl() {
             print_step "Generating self-signed certificate..."
             print_info "SANs: $san_list"
             openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-                -keyout "$ssl_dir/betterdesk.key" \
-                -out "$ssl_dir/betterdesk.crt" \
-                -subj "/CN=$cn/O=BetterDesk/C=PL" \
+                -keyout "$ssl_dir/sova.key" \
+                -out "$ssl_dir/sova.crt" \
+                -subj "/CN=$cn/O=SoVa Desk/C=PL" \
                 -addext "subjectAltName=$san_list" 2>/dev/null || \
             openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-                -keyout "$ssl_dir/betterdesk.key" \
-                -out "$ssl_dir/betterdesk.crt" \
-                -subj "/CN=$cn/O=BetterDesk/C=PL" 2>/dev/null
+                -keyout "$ssl_dir/sova.key" \
+                -out "$ssl_dir/sova.crt" \
+                -subj "/CN=$cn/O=SoVa Desk/C=PL" 2>/dev/null
 
-            if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key"; then
+            if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/sova.crt" "$ssl_dir/sova.key"; then
                 print_error "Failed to set permissions on self-signed certificate"
                 press_enter
                 return
             fi
 
-            apply_console_protocol_mode https "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" false true
+            apply_console_protocol_mode https "$ssl_dir/sova.crt" "$ssl_dir/sova.key" false true
             ssl_tls_active="yes"
             print_success "Self-signed certificate generated (valid 10 years)"
-            print_info "Certificate: $ssl_dir/betterdesk.crt"
+            print_info "Certificate: $ssl_dir/sova.crt"
             [ -n "$lan_ip" ] && [ "$lan_ip" != "$server_ip" ] && print_info "LAN IP included: $lan_ip"
             print_warning "Browsers will show security warning. Use Let's Encrypt for public servers."
             ;;
@@ -6653,22 +6653,22 @@ do_configure_ssl() {
             print_step "Generating Enterprise certificate..."
             print_info "SANs: $san_list"
             openssl req -x509 -nodes -days 3650 -newkey rsa:4096 \
-                -keyout "$ssl_dir/betterdesk.key" \
-                -out "$ssl_dir/betterdesk.crt" \
-                -subj "/CN=$cn/O=BetterDesk Enterprise/C=PL" \
+                -keyout "$ssl_dir/sova.key" \
+                -out "$ssl_dir/sova.crt" \
+                -subj "/CN=$cn/O=SoVa Desk Enterprise/C=PL" \
                 -addext "subjectAltName=$san_list" 2>/dev/null || \
             openssl req -x509 -nodes -days 3650 -newkey rsa:4096 \
-                -keyout "$ssl_dir/betterdesk.key" \
-                -out "$ssl_dir/betterdesk.crt" \
-                -subj "/CN=$cn/O=BetterDesk Enterprise/C=PL" 2>/dev/null
+                -keyout "$ssl_dir/sova.key" \
+                -out "$ssl_dir/sova.crt" \
+                -subj "/CN=$cn/O=SoVa Desk Enterprise/C=PL" 2>/dev/null
 
-            if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key"; then
+            if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/sova.crt" "$ssl_dir/sova.key"; then
                 print_error "Failed to set permissions on Enterprise certificate"
                 press_enter
                 return
             fi
 
-            apply_console_protocol_mode https "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" true true
+            apply_console_protocol_mode https "$ssl_dir/sova.crt" "$ssl_dir/sova.key" true true
             _upsert_env_line "$env_file" ENTERPRISE_TLS true
             if [ -f "$svc_file" ]; then
                 _upsert_systemd_env "$svc_file" ENTERPRISE_TLS true
@@ -6677,8 +6677,8 @@ do_configure_ssl() {
 
             print_success "Enterprise TLS configured successfully!"
             echo ""
-            print_info "Certificate: $ssl_dir/betterdesk.crt"
-            print_info "Private key: $ssl_dir/betterdesk.key"
+            print_info "Certificate: $ssl_dir/sova.crt"
+            print_info "Private key: $ssl_dir/sova.key"
             [ -n "$lan_ip" ] && [ "$lan_ip" != "$server_ip" ] && print_info "LAN IP: $lan_ip"
             echo ""
             print_info "  Panel HTTPS: :$(resolve_panel_https_port)"
@@ -6698,19 +6698,19 @@ do_configure_ssl() {
 
     if [ "$ssl_tls_active" = "yes" ]; then
         sync_go_server_signal_relay_tls "$ssl_dir"
-        ensure_betterdesk_console_user >/dev/null
+        ensure_sova_console_user >/dev/null
         print_info "Signal/relay TLS enabled; Go API stays HTTP (RustDesk client compatibility)"
         maybe_offer_standard_https_port
     fi
 
     echo ""
-    if confirm "Restart BetterDesk to apply changes?"; then
+    if confirm "Restart SoVa Desk to apply changes?"; then
         repair_https_stuck_state yes
         ensure_console_tls_material_readable 2>/dev/null || true
-        systemctl restart betterdesk-server betterdesk-console 2>/dev/null || true
-        print_success "BetterDesk services restarted"
-        verify_service_health "betterdesk-server" "21116" 15 >/dev/null 2>&1 || true
-        verify_service_health "betterdesk-console" "$(resolve_panel_health_port)" 15 >/dev/null 2>&1 || true
+        systemctl restart sova-server sova-console 2>/dev/null || true
+        print_success "SoVa Desk services restarted"
+        verify_service_health "sova-server" "21116" 15 >/dev/null 2>&1 || true
+        verify_service_health "sova-console" "$(resolve_panel_health_port)" 15 >/dev/null 2>&1 || true
         run_protocol_tests
     fi
 
@@ -6724,7 +6724,7 @@ do_configure_ssl() {
 # HTTP <-> HTTPS switch so the operator gets immediate, trustworthy feedback.
 # Honours the project invariant: the Go API (:21121) must remain HTTP for RustDesk clients.
 run_protocol_tests() {
-    local go_svc_file="/etc/systemd/system/betterdesk-server.service"
+    local go_svc_file="/etc/systemd/system/sova-server.service"
     local ssl_dir="$RUSTDESK_PATH/ssl"
     local pass=0 fail=0 warn=0
 
@@ -6737,28 +6737,28 @@ run_protocol_tests() {
     _test_warn() { echo -e "  ${YELLOW}!${NC} $1"; warn=$((warn+1)); }
 
     # ── 1. Services running ──
-    if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
+    if systemctl is-active --quiet sova-server 2>/dev/null; then
         _test_ok "Go server service is active"
     else
-        _test_fail "Go server service is NOT active (journalctl -u betterdesk-server)"
-        if journalctl -u betterdesk-server --no-pager -n 40 2>/dev/null | grep -q 'listen tcp :5000'; then
+        _test_fail "Go server service is NOT active (journalctl -u sova-server)"
+        if journalctl -u sova-server --no-pager -n 40 2>/dev/null | grep -q 'listen tcp :5000'; then
             echo -e "      ${DIM}Hint: Go tried signal on :5000 — panel PORT in .env leaked; run Repair → Repair HTTPS/TLS (#219)${NC}"
         fi
     fi
-    if systemctl is-active --quiet betterdesk-console 2>/dev/null; then
+    if systemctl is-active --quiet sova-console 2>/dev/null; then
         _test_ok "Web console service is active"
     else
-        _test_fail "Web console service is NOT active (journalctl -u betterdesk-console)"
+        _test_fail "Web console service is NOT active (journalctl -u sova-console)"
     fi
 
     # ── 1b. Wait for Go signal port (post-restart boot delay) ──
-    if systemctl is-active --quiet betterdesk-server 2>/dev/null; then
-        if verify_service_health "betterdesk-server" "21116" 15 >/dev/null 2>&1; then
+    if systemctl is-active --quiet sova-server 2>/dev/null; then
+        if verify_service_health "sova-server" "21116" 15 >/dev/null 2>&1; then
             _test_ok "Go server listening on signal port :21116"
-        elif journalctl -u betterdesk-server --no-pager -n 40 2>/dev/null | grep -q 'listen tcp :5000'; then
+        elif journalctl -u sova-server --no-pager -n 40 2>/dev/null | grep -q 'listen tcp :5000'; then
             _test_fail "Go server tried signal on :5000 (conflicts with panel redirect) — Repair → Repair HTTPS/TLS (#219)"
         else
-            _test_fail "Go server not listening on :21116 yet (journalctl -u betterdesk-server)"
+            _test_fail "Go server not listening on :21116 yet (journalctl -u sova-server)"
         fi
     fi
 
@@ -6806,7 +6806,7 @@ run_protocol_tests() {
             _test_fail "Go server TRUST_PROXY not enabled — API rate limits may use proxy IP only"
         fi
         local rp_dir="$RUSTDESK_PATH/reverse-proxy"
-        if [ -d "$rp_dir" ] && { [ -f "$rp_dir/caddy.Caddyfile.snippet" ] || [ -f "$rp_dir/nginx.betterdesk.conf.snippet" ]; }; then
+        if [ -d "$rp_dir" ] && { [ -f "$rp_dir/caddy.Caddyfile.snippet" ] || [ -f "$rp_dir/nginx.sova.conf.snippet" ]; }; then
             _test_ok "Reverse-proxy snippets in $rp_dir/"
         else
             _test_warn "No snippets in $rp_dir/ — re-run SSL menu → External reverse proxy"
@@ -6815,20 +6815,20 @@ run_protocol_tests() {
 
     # ── 2b. TLS key readable by console user (HTTPS only) ──
     if [ "$(echo "$https_enabled" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
-        local ssl_key_path console_user="betterdesk"
+        local ssl_key_path console_user="sova"
         ssl_key_path=$(read_effective_console_setting SSL_KEY_PATH "")
         if id "$console_user" &>/dev/null && [ -n "$ssl_key_path" ] && [ -e "$ssl_key_path" ]; then
             if runuser -u "$console_user" -- test -r "$ssl_key_path" 2>/dev/null; then
                 _test_ok "TLS private key readable by console user ($console_user)"
             else
-                _test_fail "Console user $console_user cannot read TLS key ($ssl_key_path) — HTTPS panel will fall back to HTTP (journalctl -u betterdesk-console)"
+                _test_fail "Console user $console_user cannot read TLS key ($ssl_key_path) — HTTPS panel will fall back to HTTP (journalctl -u sova-console)"
             fi
         fi
     fi
 
     # ── 3. Panel reachability on the correct scheme/port ──
-    if systemctl is-active --quiet betterdesk-console 2>/dev/null; then
-        verify_service_health "betterdesk-console" "$panel_port" 15 >/dev/null 2>&1 || true
+    if systemctl is-active --quiet sova-console 2>/dev/null; then
+        verify_service_health "sova-console" "$panel_port" 15 >/dev/null 2>&1 || true
     fi
     local panel_code panel_insecure="no"
     [ "$panel_scheme" = "https" ] && panel_insecure="yes"
@@ -6848,9 +6848,9 @@ run_protocol_tests() {
         else
             _test_fail "Web panel NOT reachable on ${panel_scheme}://127.0.0.1:${panel_port} (got $panel_code)"
         fi
-        if systemctl is-active --quiet betterdesk-console 2>/dev/null && [ "$panel_scheme" = "https" ]; then
-            if journalctl -u betterdesk-console --no-pager -n 80 2>/dev/null | grep -qi 'Falling back to HTTP'; then
-                echo -e "      ${DIM}Hint: console logged HTTPS fallback — check TLS key permissions (runuser -u betterdesk test -r key)${NC}"
+        if systemctl is-active --quiet sova-console 2>/dev/null && [ "$panel_scheme" = "https" ]; then
+            if journalctl -u sova-console --no-pager -n 80 2>/dev/null | grep -qi 'Falling back to HTTP'; then
+                echo -e "      ${DIM}Hint: console logged HTTPS fallback — check TLS key permissions (runuser -u sova test -r key)${NC}"
             elif [ -n "$alt_panel_port" ]; then
                 echo -e "      ${DIM}Hint: configured HTTPS_PORT=443 but Node bound :5443 — Repair → Repair permissions, then restart (#219)${NC}"
             fi
@@ -6914,7 +6914,7 @@ run_protocol_tests() {
     else
         _test_fail "Go API not responding over HTTP on :${go_api_port} (got $api_code)"
         if ! ss -tlnH 2>/dev/null | grep -q ":${go_api_port} "; then
-            if ss -tlnpH 2>/dev/null | grep ":${client_api_port} " | grep -qiE 'betterdesk-server|betterdesk-serv'; then
+            if ss -tlnpH 2>/dev/null | grep ":${client_api_port} " | grep -qiE 'sova-server|sova-serv'; then
                 echo -e "      ${DIM}Hint: Go API bound to :${client_api_port} — API_PORT from .env leaked; run Repair → Repair HTTPS/TLS or update (#219)${NC}"
             fi
         fi
@@ -6953,10 +6953,10 @@ run_protocol_tests() {
     local tls_active="no"
     [ -f "$go_svc_file" ] && grep -q '\-tls-signal' "$go_svc_file" 2>/dev/null && tls_active="yes"
     if [ "$(echo "$https_enabled" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$tls_active" = "yes" ]; then
-        if [ -f "$ssl_dir/betterdesk.crt" ]; then
-            if openssl x509 -in "$ssl_dir/betterdesk.crt" -noout 2>/dev/null; then
+        if [ -f "$ssl_dir/sova.crt" ]; then
+            if openssl x509 -in "$ssl_dir/sova.crt" -noout 2>/dev/null; then
                 local not_after days_left
-                not_after=$(openssl x509 -in "$ssl_dir/betterdesk.crt" -noout -enddate 2>/dev/null | cut -d= -f2)
+                not_after=$(openssl x509 -in "$ssl_dir/sova.crt" -noout -enddate 2>/dev/null | cut -d= -f2)
                 if [ -n "$not_after" ]; then
                     local exp_epoch now_epoch
                     exp_epoch=$(date -d "$not_after" +%s 2>/dev/null || echo 0)
@@ -6973,13 +6973,13 @@ run_protocol_tests() {
                     fi
                 fi
                 local san
-                san=$(openssl x509 -in "$ssl_dir/betterdesk.crt" -noout -ext subjectAltName 2>/dev/null | tail -n +2 | tr -d ' ')
+                san=$(openssl x509 -in "$ssl_dir/sova.crt" -noout -ext subjectAltName 2>/dev/null | tail -n +2 | tr -d ' ')
                 [ -n "$san" ] && echo -e "      ${DIM}SAN: ${san}${NC}"
             else
                 _test_fail "Certificate file is not a valid X.509 certificate"
             fi
         else
-            _test_fail "HTTPS/TLS enabled but no certificate found at $ssl_dir/betterdesk.crt"
+            _test_fail "HTTPS/TLS enabled but no certificate found at $ssl_dir/sova.crt"
         fi
 
         if [ "$tls_active" = "yes" ]; then
@@ -7026,8 +7026,8 @@ do_toggle_protocol() {
     echo ""
 
     local env_file="$CONSOLE_PATH/.env"
-    local svc_file="/etc/systemd/system/betterdesk-console.service"
-    local go_svc_file="/etc/systemd/system/betterdesk-server.service"
+    local svc_file="/etc/systemd/system/sova-console.service"
+    local go_svc_file="/etc/systemd/system/sova-server.service"
     local ssl_dir="$RUSTDESK_PATH/ssl"
 
     # Detect current mode (effective runtime: systemd overrides .env)
@@ -7077,9 +7077,9 @@ do_toggle_protocol() {
             # ── Switch to HTTPS ──
             echo ""
             local have_cert="no"
-            [ -f "$ssl_dir/betterdesk.crt" ] && [ -f "$ssl_dir/betterdesk.key" ] && have_cert="yes"
+            [ -f "$ssl_dir/sova.crt" ] && [ -f "$ssl_dir/sova.key" ] && have_cert="yes"
             local _keep_desc="No existing certificate found"
-            [ "$have_cert" = "yes" ] && _keep_desc="Reuse $ssl_dir/betterdesk.crt"
+            [ "$have_cert" = "yes" ] && _keep_desc="Reuse $ssl_dir/sova.crt"
             local _menu_items=(
                 $'Keep existing certificate\t'"$_keep_desc"
                 $'Self-signed certificate\tGenerate one for LAN / testing'
@@ -7099,7 +7099,7 @@ do_toggle_protocol() {
                         return
                     fi
                     maybe_repair_le_ssl_symlinks 2>/dev/null || true
-                    print_info "Using existing certificate at $ssl_dir/betterdesk.crt"
+                    print_info "Using existing certificate at $ssl_dir/sova.crt"
                     ;;
                 2)
                     mkdir -p "$ssl_dir"
@@ -7112,15 +7112,15 @@ do_toggle_protocol() {
                     [ -n "$ss_domain" ] && san_list="$san_list,DNS:$ss_domain"
                     print_step "Generating self-signed certificate..."
                     openssl req -x509 -nodes -days 3650 -newkey rsa:4096 \
-                        -keyout "$ssl_dir/betterdesk.key" \
-                        -out "$ssl_dir/betterdesk.crt" \
-                        -subj "/CN=${ss_domain:-$server_ip}/O=BetterDesk/C=PL" \
+                        -keyout "$ssl_dir/sova.key" \
+                        -out "$ssl_dir/sova.crt" \
+                        -subj "/CN=${ss_domain:-$server_ip}/O=SoVa Desk/C=PL" \
                         -addext "subjectAltName=$san_list" 2>/dev/null || \
                     openssl req -x509 -nodes -days 3650 -newkey rsa:4096 \
-                        -keyout "$ssl_dir/betterdesk.key" \
-                        -out "$ssl_dir/betterdesk.crt" \
-                        -subj "/CN=${ss_domain:-$server_ip}/O=BetterDesk/C=PL" 2>/dev/null
-                    if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key"; then
+                        -keyout "$ssl_dir/sova.key" \
+                        -out "$ssl_dir/sova.crt" \
+                        -subj "/CN=${ss_domain:-$server_ip}/O=SoVa Desk/C=PL" 2>/dev/null
+                    if ! deploy_ssl_material_to_rustdesk_dir "$ssl_dir/sova.crt" "$ssl_dir/sova.key"; then
                         print_error "Failed to set permissions on self-signed certificate"
                         press_enter
                         return
@@ -7205,7 +7205,7 @@ do_toggle_protocol() {
             local api_tls="false" allow_self_signed="true"
             case "${cert_choice:-2}" in
                 1)
-                    infer_tls_mode_from_cert "$ssl_dir/betterdesk.crt"
+                    infer_tls_mode_from_cert "$ssl_dir/sova.crt"
                     api_tls="$INFERRED_RUSTDESK_API_TLS"
                     allow_self_signed="$INFERRED_ALLOW_SELF_SIGNED"
                     ;;
@@ -7218,7 +7218,7 @@ do_toggle_protocol() {
                     allow_self_signed="false"
                     ;;
                 4)
-                    infer_tls_mode_from_cert "$ssl_dir/betterdesk.crt"
+                    infer_tls_mode_from_cert "$ssl_dir/sova.crt"
                     api_tls="$INFERRED_RUSTDESK_API_TLS"
                     allow_self_signed="$INFERRED_ALLOW_SELF_SIGNED"
                     ;;
@@ -7226,10 +7226,10 @@ do_toggle_protocol() {
 
             print_step "Switching to HTTPS mode..."
 
-            apply_console_protocol_mode https "$ssl_dir/betterdesk.crt" "$ssl_dir/betterdesk.key" "$api_tls" "$allow_self_signed"
+            apply_console_protocol_mode https "$ssl_dir/sova.crt" "$ssl_dir/sova.key" "$api_tls" "$allow_self_signed"
 
             sync_go_server_signal_relay_tls "$ssl_dir"
-            ensure_betterdesk_console_user >/dev/null
+            ensure_sova_console_user >/dev/null
 
             print_success "Switched to HTTPS mode"
             echo ""
@@ -7254,16 +7254,16 @@ do_toggle_protocol() {
     esac
 
     echo ""
-    if confirm "Restart BetterDesk services now?"; then
+    if confirm "Restart SoVa Desk services now?"; then
         repair_https_stuck_state yes
         ensure_console_tls_material_readable 2>/dev/null || true
-        systemctl restart betterdesk-server betterdesk-console 2>/dev/null || true
-        verify_service_health "betterdesk-server" "21116" 15 >/dev/null 2>&1 || true
-        verify_service_health "betterdesk-console" "$(resolve_panel_health_port)" 15 >/dev/null 2>&1 || true
-        print_success "BetterDesk services restarted"
+        systemctl restart sova-server sova-console 2>/dev/null || true
+        verify_service_health "sova-server" "21116" 15 >/dev/null 2>&1 || true
+        verify_service_health "sova-console" "$(resolve_panel_health_port)" 15 >/dev/null 2>&1 || true
+        print_success "SoVa Desk services restarted"
         run_protocol_tests
     else
-        print_info "Changes saved. Restart later with: systemctl restart betterdesk-server betterdesk-console"
+        print_info "Changes saved. Restart later with: systemctl restart sova-server sova-console"
     fi
 
     press_enter
@@ -7282,10 +7282,10 @@ do_migrate_database() {
     local migrate_bin=""
     local arch=$(uname -m)
     local search_paths=(
-        "$SCRIPT_DIR/betterdesk-server/tools/migrate/migrate-linux-amd64"
+        "$SCRIPT_DIR/sova-server/tools/migrate/migrate-linux-amd64"
         "$SCRIPT_DIR/tools/migrate/migrate-linux-amd64"
         "$RUSTDESK_PATH/migrate"
-        "/usr/local/bin/betterdesk-migrate"
+        "/usr/local/bin/sova-migrate"
     )
 
     for p in "${search_paths[@]}"; do
@@ -7308,8 +7308,8 @@ do_migrate_database() {
 
     if [ -z "$migrate_bin" ]; then
         print_error "Migration binary not found!"
-        print_info "Expected at: $SCRIPT_DIR/betterdesk-server/tools/migrate/migrate-linux-amd64"
-        print_info "Build it with: cd betterdesk-server && go build -o tools/migrate/migrate-linux-amd64 ./tools/migrate/"
+        print_info "Expected at: $SCRIPT_DIR/sova-server/tools/migrate/migrate-linux-amd64"
+        print_info "Build it with: cd sova-server && go build -o tools/migrate/migrate-linux-amd64 ./tools/migrate/"
         press_enter
         return
     fi
@@ -7319,13 +7319,13 @@ do_migrate_database() {
     local _menu_items=(
         $'Rust -> Go\tMigrate legacy Rust hbbs database to the Go server'
         $'Node.js -> Go\tMigrate the Node.js web console DB to the Go server'
-        $'SQLite -> PostgreSQL\tMigrate BetterDesk Go SQLite to PostgreSQL'
+        $'SQLite -> PostgreSQL\tMigrate SoVa Desk Go SQLite to PostgreSQL'
         $'PostgreSQL -> SQLite\tMigrate PostgreSQL back to SQLite'
         $'Backup\tCreate a timestamped SQLite database backup'
         $'Back\tReturn to the main menu'
     )
     local _menu_returns=( 1 2 3 4 5 0 )
-    menu_choose "Database Migration" "Migrate databases between BetterDesk components"
+    menu_choose "Database Migration" "Migrate databases between SoVa Desk components"
     local mig_choice="$MENU_CHOICE"
 
     case $mig_choice in
@@ -7433,7 +7433,7 @@ do_migrate_database() {
 
             if [ $? -eq 0 ]; then
                 print_success "SQLite → PostgreSQL migration completed successfully!"
-                print_info "Update your BetterDesk Go server config: DB_URL=$pg_uri"
+                print_info "Update your SoVa Desk Go server config: DB_URL=$pg_uri"
             else
                 print_error "Migration failed. Check the output above for details."
             fi
@@ -7531,7 +7531,7 @@ show_menu() {
     echo "  S. ⚙️  Settings (paths)"
     echo "  0. ❌ Exit"
     echo ""
-    echo -e "  ${DIM}Tip: this menu also supports arrow-key navigation (set BETTERDESK_CLASSIC_MENU=1 to force this list).${NC}"
+    echo -e "  ${DIM}Tip: this menu also supports arrow-key navigation (set SOVA_CLASSIC_MENU=1 to force this list).${NC}"
     echo ""
 }
 
@@ -7571,7 +7571,7 @@ main() {
         $'Reset admin password\tReset the console admin'
         $'Build & deploy server\tCompile and deploy the Go server'
         $'Diagnostics\tDetailed problem analysis'
-        $'Uninstall\tRemove BetterDesk'
+        $'Uninstall\tRemove SoVa Desk'
         $'Minimal installation\tServer only'
         $'Configure SSL certificates\tLet'"'"'s Encrypt / custom / self-signed'
         $'Toggle HTTP/HTTPS\tSwitch protocol + run tests'
@@ -7589,7 +7589,7 @@ main() {
             local status_line="Install: ${INSTALL_STATUS:-unknown}"
             [ "$HBBS_RUNNING" = true ] && status_line="$status_line  |  server: running" || status_line="$status_line  |  server: stopped"
             [ "$CONSOLE_RUNNING" = true ] && status_line="$status_line  |  console: running" || status_line="$status_line  |  console: stopped"
-            if tui_select "BetterDesk Console Manager v${VERSION}" "$status_line" "${menu_labels[@]}"; then
+            if tui_select "SoVa Desk Console Manager v${VERSION}" "$status_line" "${menu_labels[@]}"; then
                 choice="${menu_actions[$TUI_RESULT]}"
             else
                 choice="0"
