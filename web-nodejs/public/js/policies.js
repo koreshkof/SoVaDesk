@@ -150,7 +150,7 @@
     }
 
     try {
-      const csrfToken = window.BetterDesk?.csrfToken || '';
+      const csrfToken = window.SoVaDesk?.csrfToken || '';
       const resp = await fetch(`/api/panel/policies/${encodeURIComponent(currentOrgId)}/${section}`, {
         method: 'PUT',
         headers: {

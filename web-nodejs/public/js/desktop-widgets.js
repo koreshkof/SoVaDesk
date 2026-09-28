@@ -213,7 +213,7 @@
     }
 
     function applyBrandingWallpaper(fit) {
-        var branding = (window.BetterDesk && window.BetterDesk.branding) || {};
+        var branding = (window.SoVaDesk && window.SoVaDesk.branding) || {};
         var type = branding.bgType || 'none';
         if (type === 'color' && /^#[0-9a-fA-F]{6}$/.test(String(branding.bgColor || ''))) {
             applyWallpaper('solid:' + branding.bgColor, fit, false);
@@ -401,7 +401,7 @@
 
     function saveLayoutToServer(arr) {
         if (!layoutPersistenceEnabled()) return;
-        if (!window.BetterDesk || !window.BetterDesk.csrfToken) return;
+        if (!window.SoVaDesk || !window.SoVaDesk.csrfToken) return;
         if (typeof Utils === 'undefined' || !Utils.api) return;
         Utils.api('/api/desktop/layout', {
             method: 'POST',
@@ -1372,7 +1372,7 @@
         // Help button — start desktop tutorial
         var helpBtn = nav.querySelector('#topnav-help');
         if (helpBtn) helpBtn.addEventListener('click', function () {
-            if (window.BetterDeskTutorial) window.BetterDeskTutorial.start('desktop');
+            if (window.SoVaDeskTutorial) window.SoVaDeskTutorial.start('desktop');
         });
         // Exit desktop mode
         var exitBtn = nav.querySelector('#topnav-exit');
@@ -1526,7 +1526,7 @@
     // Cache devices for search (populate on init)
     var _deviceSearchCache = [];
     function _loadDeviceSearchCache() {
-        var token = window.BetterDesk && window.BetterDesk.csrfToken;
+        var token = window.SoVaDesk && window.SoVaDesk.csrfToken;
         fetch('/api/devices', {
             credentials: 'same-origin',
             headers: token ? { 'x-csrf-token': token } : {}

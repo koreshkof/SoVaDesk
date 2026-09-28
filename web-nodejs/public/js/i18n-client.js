@@ -5,10 +5,10 @@
 (function() {
     'use strict';
     
-    const translations = window.BetterDesk?.translations || {};
-    const currentLang = window.BetterDesk?.lang || 'en';
-    const availableLanguages = Array.isArray(window.BetterDesk?.availableLanguages)
-        ? window.BetterDesk.availableLanguages
+    const translations = window.SoVaDesk?.translations || {};
+    const currentLang = window.SoVaDesk?.lang || 'en';
+    const availableLanguages = Array.isArray(window.SoVaDesk?.availableLanguages)
+        ? window.SoVaDesk.availableLanguages
         : [];
     const availableLanguageCodes = new Set(availableLanguages.map(lang => lang.code));
 
@@ -22,7 +22,7 @@
 
     try {
         const savedLang = localStorage.getItem('betterdesk_lang');
-        const accountLang = window.BetterDesk?.user?.preferred_language;
+        const accountLang = window.SoVaDesk?.user?.preferred_language;
         if (savedLang && savedLang !== currentLang && isSupportedLanguage(savedLang) && !hasCookieLanguage() && !accountLang) {
             window.__betterdeskPendingLanguageRestore = savedLang;
         } else if (currentLang) {

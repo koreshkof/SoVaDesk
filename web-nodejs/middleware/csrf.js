@@ -4,7 +4,7 @@
  * 
  * Token flow:
  *   1. Server generates token, sets it as a cookie + passes to EJS views
- *   2. Client JS reads window.BetterDesk.csrfToken and sends it in X-CSRF-Token header
+ *   2. Client JS reads window.SoVaDesk.csrfToken and sends it in X-CSRF-Token header
  *   3. Middleware validates header matches cookie on state-changing requests (POST/PUT/DELETE/PATCH)
  */
 

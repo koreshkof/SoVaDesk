@@ -34,7 +34,7 @@
     }
 
     function t(key) {
-        return window.BetterDesk?.t?.(key) || key.split('.').pop();
+        return window.SoVaDesk?.t?.(key) || key.split('.').pop();
     }
 
     // ── File Browser Session Manager ─────────────────────────────────────

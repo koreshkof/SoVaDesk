@@ -244,7 +244,7 @@ module.exports = {
     databaseUrl: process.env.DATABASE_URL || '',
 
     // App info
-    appName: 'BetterDesk Console',
+    appName: 'SoVa Desk Console',
     appVersion: pkgVersion,
 
     // Logging (default warn in production — see lib/logger.js)

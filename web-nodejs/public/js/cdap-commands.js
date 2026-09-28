@@ -24,7 +24,7 @@
         }
         lastCommandTime[key] = now;
 
-        const csrfToken = window.BetterDesk?.csrfToken || '';
+        const csrfToken = window.SoVaDesk?.csrfToken || '';
 
         try {
             const res = await fetch(`/api/cdap/devices/${encodeURIComponent(deviceId)}/command`, {
@@ -73,10 +73,10 @@
     }
 
     function sendWithConfirm(deviceId, widgetId, action, value, confirmMsg) {
-        const __ = window.BetterDesk?.translations || {};
+        const __ = window.SoVaDesk?.translations || {};
         const title = __?.cdap?.confirm_command || 'Confirm Command';
 
-        if (!window.BetterDeskModal) {
+        if (!window.SoVaDeskModal) {
             if (confirm(confirmMsg || title)) {
                 return send(deviceId, widgetId, action, value);
             }
@@ -84,7 +84,7 @@
         }
 
         return new Promise((resolve) => {
-            window.BetterDeskModal.confirm({
+            window.SoVaDeskModal.confirm({
                 title: title,
                 message: confirmMsg || `${action} → ${widgetId}?`,
                 confirmText: __?.common?.confirm || 'Confirm',
@@ -164,8 +164,8 @@
     }
 
     function showToast(message, type) {
-        if (window.BetterDeskNotifications?.show) {
-            window.BetterDeskNotifications.show(message, type);
+        if (window.SoVaDeskNotifications?.show) {
+            window.SoVaDeskNotifications.show(message, type);
         }
     }
 

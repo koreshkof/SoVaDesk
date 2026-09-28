@@ -505,7 +505,7 @@ router.get('/branding', (req, res) => {
         const branding = brandingService.getBranding();
         const publicAppearance = brandingService.getPublicAppearance();
         res.json({
-            company_name: branding.appName || 'BetterDesk',
+            company_name: branding.appName || 'SoVa Desk',
             accent_color: branding.colors?.accentBlue || '#3b82f6',
             support_contact: branding.supportContact || '',
             appearance: publicAppearance
@@ -514,7 +514,7 @@ router.get('/branding', (req, res) => {
         console.error('[BD-API] Branding error:', err.message);
         // Return defaults on error — never block the client
         res.json({
-            company_name: 'BetterDesk',
+            company_name: 'SoVa Desk',
             accent_color: '#3b82f6',
             support_contact: '',
         });
@@ -537,7 +537,7 @@ router.get('/appearance', (_req, res) => {
                 version: '2.0',
                 revision: 'fallback',
                 product: 'betterdesk-appearance',
-                identity: { appName: 'BetterDesk', logoType: 'icon', logoIcon: 'dns' },
+                identity: { appName: 'SoVa Desk', logoType: 'icon', logoIcon: 'dns' },
                 palette: {
                     mode: 'dark',
                     primary: '#58a6ff',

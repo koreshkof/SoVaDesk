@@ -250,7 +250,7 @@
         if (session.overlay) {
             session.overlay.classList.remove('hidden');
             session.overlay.querySelector('span:last-child').textContent =
-                window.BetterDesk?.t?.('cdap.disconnected') || 'Disconnected';
+                window.SoVaDesk?.t?.('cdap.disconnected') || 'Disconnected';
         }
         const connectDiv = session.widgetEl?.querySelector('.cdap-video-connect');
         if (connectDiv) connectDiv.classList.remove('hidden');

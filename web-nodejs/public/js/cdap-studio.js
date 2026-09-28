@@ -891,8 +891,8 @@
     // ─── Flow Persistence (API) ─────────────────────────────────────
 
     function getCsrf() {
-        return window.BetterDesk && window.BetterDesk.csrfToken
-            ? { 'x-csrf-token': window.BetterDesk.csrfToken }
+        return window.SoVaDesk && window.SoVaDesk.csrfToken
+            ? { 'x-csrf-token': window.SoVaDesk.csrfToken }
             : {};
     }
 

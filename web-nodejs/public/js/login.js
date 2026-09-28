@@ -21,7 +21,7 @@
         
         if (!loginForm) return;
         
-        const csrfToken = window.BetterDesk?.csrfToken || '';
+        const csrfToken = window.SoVaDesk?.csrfToken || '';
 
         // Check OIDC status and show SSO button if enabled
         checkOIDCStatus();

@@ -16,7 +16,7 @@
     }
 
     function returnUrl() {
-        var u = (window.BetterDesk && window.BetterDesk.returnUrl) || '/remote';
+        var u = (window.SoVaDesk && window.SoVaDesk.returnUrl) || '/remote';
         if (typeof u !== 'string' || !u.startsWith('/remote')) return '/remote';
         return u;
     }
@@ -61,7 +61,7 @@
     }
 
     function checkSessionExpired() {
-        if (!(window.BetterDesk && window.BetterDesk.sessionExpired)) return;
+        if (!(window.SoVaDesk && window.SoVaDesk.sessionExpired)) return;
         showError(
             document.getElementById('rdclient-error'),
             document.getElementById('rdclient-error-text'),
@@ -76,7 +76,7 @@
         var errorText = document.getElementById('rdclient-error-text');
         var passwordToggle = document.getElementById('rdclient-password-toggle');
         var passwordInput = document.getElementById('rdclient-password');
-        var csrfToken = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        var csrfToken = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
 
         if (passwordToggle && passwordInput) {
             passwordToggle.addEventListener('click', function () {
@@ -173,7 +173,7 @@
         var errorEl = document.getElementById('rdclient-totp-error');
         var errorText = document.getElementById('rdclient-totp-error-text');
         var backLink = document.getElementById('rdclient-totp-back-link');
-        var csrfToken = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        var csrfToken = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
 
         if (!form) return;
 

@@ -1460,7 +1460,7 @@
         try {
             const resp = await fetch('/api/settings/fonts/upload', {
                 method: 'POST',
-                headers: { 'x-csrf-token': window.BetterDesk?.csrfToken || '' },
+                headers: { 'x-csrf-token': window.SoVaDesk?.csrfToken || '' },
                 body: formData
             });
             const result = await resp.json();
@@ -1919,7 +1919,7 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/settings/branding/upload-background');
             xhr.withCredentials = true;
-            const token = window.BetterDesk?.csrfToken || '';
+            const token = window.SoVaDesk?.csrfToken || '';
             if (token) xhr.setRequestHeader('x-csrf-token', token);
             xhr.responseType = 'json';
 
@@ -2154,7 +2154,7 @@
         try {
             const resp = await fetch('/api/settings/branding/upload-logo', {
                 method: 'POST',
-                headers: { 'x-csrf-token': window.BetterDesk?.csrfToken || '' },
+                headers: { 'x-csrf-token': window.SoVaDesk?.csrfToken || '' },
                 body: formData
             });
             const result = await resp.json();
@@ -2597,8 +2597,8 @@
             
             try {
                 const fetchHeaders = {};
-                if (window.BetterDesk && window.BetterDesk.csrfToken) {
-                    fetchHeaders['X-CSRF-Token'] = window.BetterDesk.csrfToken;
+                if (window.SoVaDesk && window.SoVaDesk.csrfToken) {
+                    fetchHeaders['X-CSRF-Token'] = window.SoVaDesk.csrfToken;
                 }
                 const response = await fetch('/api/settings/backup', {
                     credentials: 'same-origin',
@@ -2675,8 +2675,8 @@
                 if (label) label.classList.add('loading');
                 
                 const headers = {};
-                if (window.BetterDesk && window.BetterDesk.csrfToken) {
-                    headers['X-CSRF-Token'] = window.BetterDesk.csrfToken;
+                if (window.SoVaDesk && window.SoVaDesk.csrfToken) {
+                    headers['X-CSRF-Token'] = window.SoVaDesk.csrfToken;
                 }
                 
                 const response = await fetch('/api/settings/restore', {
@@ -3939,7 +3939,7 @@
     function pollConsoleRestart(installResult) {
         let attempts = 0;
         const maxAttempts = 90;
-        const previousCacheVersion = window.BetterDesk?.cacheVersion || '';
+        const previousCacheVersion = window.SoVaDesk?.cacheVersion || '';
         const interval = setInterval(async () => {
             attempts++;
             setUpdatePhase('restart', 'active', `${_('updates.restarting')} (${attempts}/${maxAttempts})`);
@@ -4181,7 +4181,7 @@
                 if (richCb) richCb.checked = data.rich_approve !== false;
                 if (tagPickerCb) tagPickerCb.checked = data.tag_picker !== false;
                 if (pendingHint && data.pending_count > 0) {
-                    const msg = (window.BetterDesk?.translations?.settings?.enrollment_pending_count
+                    const msg = (window.SoVaDesk?.translations?.settings?.enrollment_pending_count
                         || '{count} pending enrollment request(s)')
                         .replace('{count}', String(data.pending_count));
                     pendingHint.textContent = msg;
@@ -4201,7 +4201,7 @@
                         method: 'PUT',
                         body: patch,
                     });
-                    Notifications?.success?.(window.BetterDesk?.translations?.common?.saved || 'Saved');
+                    Notifications?.success?.(window.SoVaDesk?.translations?.common?.saved || 'Saved');
                     await loadEnrollmentSettings();
                 } catch (err) {
                     Notifications?.error?.(err.message || 'Save failed');
@@ -4216,7 +4216,7 @@
                 const next = radio.value;
                 if (next === previous) return;
 
-                const modeLabel = (window.BetterDesk?.translations?.tokens?.['mode_' + next]
+                const modeLabel = (window.SoVaDesk?.translations?.tokens?.['mode_' + next]
                     || next);
                 const ok = await applyWithConfirm({
                     previousValue: previous,
@@ -4239,7 +4239,7 @@
                             body: { mode },
                         });
                         enrollmentMode = mode;
-                        Notifications?.success?.(window.BetterDesk?.translations?.common?.saved || 'Saved');
+                        Notifications?.success?.(window.SoVaDesk?.translations?.common?.saved || 'Saved');
                         await loadEnrollmentSettings();
                     }
                 });
@@ -4299,7 +4299,7 @@
                         max_days: maxDays,
                     },
                 });
-                Notifications?.success?.(window.BetterDesk?.translations?.common?.saved || 'Saved');
+                Notifications?.success?.(window.SoVaDesk?.translations?.common?.saved || 'Saved');
                 await loadClientSessionsSettings();
             } catch (err) {
                 Notifications?.error?.(err.message || 'Save failed');
@@ -5095,7 +5095,7 @@
     function pollAdvancedConsoleRestart() {
         let attempts = 0;
         const maxAttempts = 90;
-        const previousCacheVersion = window.BetterDesk?.cacheVersion || '';
+        const previousCacheVersion = window.SoVaDesk?.cacheVersion || '';
         Notifications.info(_('settings.advanced_restart_polling'));
 
         const interval = setInterval(async () => {

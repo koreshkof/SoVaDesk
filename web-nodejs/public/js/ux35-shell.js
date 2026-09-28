@@ -245,12 +245,12 @@
         var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         applyThemeLocally(next);
 
-        if (window.BetterDesk && window.BetterDesk.csrfToken) {
+        if (window.SoVaDesk && window.SoVaDesk.csrfToken) {
             fetch('/api/settings/branding', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token': window.BetterDesk.csrfToken
+                    'X-CSRF-Token': window.SoVaDesk.csrfToken
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
@@ -260,8 +260,8 @@
                 })
             }).then(function (res) {
                 if (res.ok) {
-                    if (window.BetterDesk.branding) {
-                        window.BetterDesk.branding.themeMode = next;
+                    if (window.SoVaDesk.branding) {
+                        window.SoVaDesk.branding.themeMode = next;
                     }
                     reloadBrandingStylesheet();
                 }
@@ -456,7 +456,7 @@
     }
 
     function init() {
-        if (window.BetterDesk && window.BetterDesk.embed) return;
+        if (window.SoVaDesk && window.SoVaDesk.embed) return;
         restoreSidebarWidth();
         initDrawer();
         initResize();

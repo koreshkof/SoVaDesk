@@ -8,14 +8,14 @@
  * @module toolkit
  */
 
-/* global BetterDesk, _ */
+/* global SoVaDesk, _ */
 'use strict';
 
 (function () {
     // ── Helpers ─────────────────────────────────────────────────────────
 
     function getCsrfToken() {
-        return window.BetterDesk?.csrfToken || '';
+        return window.SoVaDesk?.csrfToken || '';
     }
 
     function t(key, fallback) {

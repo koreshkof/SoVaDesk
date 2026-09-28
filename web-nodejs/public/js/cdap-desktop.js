@@ -1077,7 +1077,7 @@
         if (session.overlay) {
             session.overlay.classList.remove('hidden');
             session.overlay.querySelector('span:last-child').textContent =
-                window.BetterDesk?.t?.('cdap.disconnected') || 'Disconnected';
+                window.SoVaDesk?.t?.('cdap.disconnected') || 'Disconnected';
         }
         // Reset cursor
         if (session.canvas) session.canvas.style.cursor = 'default';

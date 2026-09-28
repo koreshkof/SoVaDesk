@@ -19,7 +19,7 @@ const Utils = {
             minute: '2-digit'
         };
         
-        return date.toLocaleDateString(window.BetterDesk.lang, { ...defaultOptions, ...options });
+        return date.toLocaleDateString(window.SoVaDesk.lang, { ...defaultOptions, ...options });
     },
     
     /**
@@ -208,8 +208,8 @@ const Utils = {
         };
         
         // Add CSRF token if available
-        if (window.BetterDesk.csrfToken) {
-            defaults.headers['X-CSRF-Token'] = window.BetterDesk.csrfToken;
+        if (window.SoVaDesk.csrfToken) {
+            defaults.headers['X-CSRF-Token'] = window.SoVaDesk.csrfToken;
         }
         
         const config = {
@@ -253,7 +253,7 @@ const Utils = {
         } catch (error) {
             if (error.status === 401) {
                 var path = window.location.pathname || '';
-                var panelUser = window.BetterDesk && window.BetterDesk.user;
+                var panelUser = window.SoVaDesk && window.SoVaDesk.user;
                 if (path.startsWith('/remote') && !path.startsWith('/remote/login')) {
                     window.location.href = '/remote/login?return=' +
                         encodeURIComponent(path + (window.location.search || '')) + '&expired=1';

@@ -856,8 +856,8 @@ const DeviceDetail = (function () {
         // Footer buttons
         panel.querySelector('#dp-close-btn')?.addEventListener('click', close);
         panel.querySelector('#dp-edit-btn')?.addEventListener('click', function () {
-            if (window.BetterDeskDevices && typeof window.BetterDeskDevices.showEditModal === 'function' && device) {
-                window.BetterDeskDevices.showEditModal(device.id);
+            if (window.SoVaDeskDevices && typeof window.SoVaDeskDevices.showEditModal === 'function' && device) {
+                window.SoVaDeskDevices.showEditModal(device.id);
             } else {
                 Notifications.error(_('errors.server_error'));
             }
@@ -1275,8 +1275,8 @@ const DeviceDetail = (function () {
 
         switch (action) {
             case 'edit':
-                if (window.BetterDeskDevices && typeof window.BetterDeskDevices.showEditModal === 'function') {
-                    window.BetterDeskDevices.showEditModal(device.id);
+                if (window.SoVaDeskDevices && typeof window.SoVaDeskDevices.showEditModal === 'function') {
+                    window.SoVaDeskDevices.showEditModal(device.id);
                 } else {
                     Notifications.error(_('errors.server_error'));
                 }

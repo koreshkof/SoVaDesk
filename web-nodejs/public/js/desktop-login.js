@@ -22,7 +22,7 @@
     // ============ Session Expiry Detection ============
 
     function checkSessionExpired() {
-        if (window.BetterDesk && window.BetterDesk.sessionExpired) {
+        if (window.SoVaDesk && window.SoVaDesk.sessionExpired) {
             // Skip lock screen, go straight to login form with message
             var lockScreen = document.getElementById('dl-lock-screen');
             var loginLayer = document.getElementById('dl-login-layer');
@@ -139,7 +139,7 @@
 
         if (!form) return;
 
-        var csrfToken = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        var csrfToken = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
 
         // Password toggle
         if (passwordToggle && passwordInput) {
@@ -244,7 +244,7 @@
 
         if (!form) return;
 
-        var csrfToken = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        var csrfToken = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
 
         // Digit input navigation + auto-submit on 6th digit
         var digits = form.querySelectorAll('.dl-totp-digit');
@@ -349,7 +349,7 @@
     function renderUserChips() {
         var container = document.getElementById('dl-users');
         if (!container) return;
-        var users = (window.BetterDesk && window.BetterDesk.users) || [];
+        var users = (window.SoVaDesk && window.SoVaDesk.users) || [];
         if (!users.length) return;
 
         var html = '';
@@ -400,9 +400,9 @@
     // ============ Helpers ============
 
     function _t(key) {
-        if (window.BetterDesk && window.BetterDesk.translations) {
+        if (window.SoVaDesk && window.SoVaDesk.translations) {
             var keys = key.split('.');
-            var val = window.BetterDesk.translations;
+            var val = window.SoVaDesk.translations;
             for (var i = 0; i < keys.length; i++) {
                 if (val && typeof val === 'object') val = val[keys[i]];
                 else return key;

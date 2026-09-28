@@ -28,7 +28,7 @@
     function renderBrandLogo() {
         var el = document.getElementById('rd-desk-logo');
         if (!el) return;
-        var b = (window.BetterDesk && window.BetterDesk.branding) || {};
+        var b = (window.SoVaDesk && window.SoVaDesk.branding) || {};
         if (b.logoType === 'text' && b.logoText) {
             el.innerHTML = '<span class="brand-text-logo">' + esc(b.logoText) +
                 (b.logoTextAccent ? '<span class="brand-text-accent">' + esc(b.logoTextAccent) + '</span>' : '') +
@@ -48,7 +48,7 @@
 
     function renderUser() {
         var el = document.getElementById('rd-desk-user');
-        var user = window.BetterDesk && window.BetterDesk.user;
+        var user = window.SoVaDesk && window.SoVaDesk.user;
         if (el && user) el.textContent = user.username || user.name || '';
     }
 
@@ -267,12 +267,12 @@
     function populateLanguageSelect() {
         var sel = document.getElementById('rd-desk-lang');
         if (!sel || sel.options.length > 0) return;
-        var langs = (window.BetterDesk && window.BetterDesk.availableLanguages) || [];
+        var langs = (window.SoVaDesk && window.SoVaDesk.availableLanguages) || [];
         langs.forEach(function (lang) {
             var opt = document.createElement('option');
             opt.value = lang.code;
             opt.textContent = lang.native || lang.name || lang.code;
-            if (lang.code === (window.BetterDesk && window.BetterDesk.lang)) opt.selected = true;
+            if (lang.code === (window.SoVaDesk && window.SoVaDesk.lang)) opt.selected = true;
             sel.appendChild(opt);
         });
     }

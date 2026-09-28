@@ -382,7 +382,7 @@ function addDirIfExists(entries, archivePrefix, dirPath, present) {
  */
 function buildRecoveryReadme(manifest) {
     return [
-        'BetterDesk Console — Full Disaster-Recovery Backup',
+        'SoVa Desk Console — Full Disaster-Recovery Backup',
         '==================================================',
         '',
         `Created:          ${manifest._created}`,

@@ -11,7 +11,7 @@
         return (tr && tr !== k) ? tr : (def != null ? def : k);
     };
     const notify = window.Notifications || { success: console.log, error: console.error, warning: console.warn, info: console.info };
-    const csrf = () => (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+    const csrf = () => (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
 
     async function api(method, url, body) {
         const headers = { 'Accept': 'application/json' };

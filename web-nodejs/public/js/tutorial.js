@@ -38,9 +38,9 @@
             var result = window._(key);
             return result !== key ? result : fallback;
         }
-        if (window.BetterDesk && window.BetterDesk.translations) {
+        if (window.SoVaDesk && window.SoVaDesk.translations) {
             var keys = key.split('.');
-            var val = window.BetterDesk.translations;
+            var val = window.SoVaDesk.translations;
             for (var i = 0; i < keys.length; i++) {
                 if (val && typeof val === 'object' && keys[i] in val) {
                     val = val[keys[i]];
@@ -711,7 +711,7 @@
     };
 
     // Backward compatibility alias
-    window.BetterDeskTutorial = window.Tutorial;
+    window.SoVaDeskTutorial = window.Tutorial;
 
     // ============ Floating Help Button ============
 

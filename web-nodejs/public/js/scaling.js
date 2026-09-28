@@ -8,7 +8,7 @@
 
     function csrfHeaders(extra) {
         const h = Object.assign({}, extra || {});
-        const token = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        const token = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
         if (token) h['x-csrf-token'] = token;
         return h;
     }

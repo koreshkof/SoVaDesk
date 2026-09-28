@@ -111,9 +111,9 @@ class RDClient {
         if (arr) arr.forEach(fn => { try { fn(...args); } catch(e) { console.error(e); } });
     }
 
-    /** @returns {boolean} Verbose relay/auth logging (window.BetterDesk.debugRelay = true) */
+    /** @returns {boolean} Verbose relay/auth logging (window.SoVaDesk.debugRelay = true) */
     static isRelayDebug() {
-        return typeof window !== 'undefined' && window.BetterDesk && window.BetterDesk.debugRelay === true;
+        return typeof window !== 'undefined' && window.SoVaDesk && window.SoVaDesk.debugRelay === true;
     }
 
     _debugRelay(...args) {

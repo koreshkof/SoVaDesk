@@ -123,7 +123,7 @@
 
     const Prefs = window.RemoteViewerPrefs || {};
     const globalViewerPrefs = typeof Prefs.loadRemoteViewerPrefs === 'function'
-        ? Prefs.loadRemoteViewerPrefs(window.BetterDesk?.user?.id)
+        ? Prefs.loadRemoteViewerPrefs(window.SoVaDesk?.user?.id)
         : { quality: 'Best', scale: 'fit', codec: 'Auto', adaptiveQuality: true, backgroundFps: 1 };
 
     function cloneViewerPrefs(prefs) {
@@ -140,19 +140,19 @@
     function persistGlobalViewerPrefs(prefs) {
         Object.assign(globalViewerPrefs, prefs);
         if (typeof Prefs.saveRemoteViewerPrefs === 'function') {
-            Prefs.saveRemoteViewerPrefs(window.BetterDesk?.user?.id, globalViewerPrefs);
+            Prefs.saveRemoteViewerPrefs(window.SoVaDesk?.user?.id, globalViewerPrefs);
         }
     }
 
     function buildClientOpts(session) {
         const prefs = session.viewerPrefs || globalViewerPrefs;
-        const userName = (window.BetterDesk.user && (window.BetterDesk.user.display_name || window.BetterDesk.user.username)) || 'BetterDesk Web';
+        const userName = (window.SoVaDesk.user && (window.SoVaDesk.user.display_name || window.SoVaDesk.user.username)) || 'BetterDesk Web';
         const activeFps = typeof Prefs.getActiveFpsForQuality === 'function'
             ? Prefs.getActiveFpsForQuality(prefs.quality)
             : 60;
         return {
             deviceId: session.deviceId,
-            serverPubKey: window.BetterDesk.serverPubKey || '',
+            serverPubKey: window.SoVaDesk.serverPubKey || '',
             myName: userName,
             scaleMode: prefs.scale || 'fit',
             fps: activeFps,
@@ -1934,7 +1934,7 @@
     if (typeof window._ === 'undefined') {
         window._ = function (key) {
             const parts = key.split('.');
-            let val = window.BetterDesk?.translations;
+            let val = window.SoVaDesk?.translations;
             for (const p of parts) {
                 if (!val) return key;
                 val = val[p];

@@ -6,10 +6,10 @@
 (function () {
     'use strict';
 
-    const _ = (window.BetterDesk && window.BetterDesk.translations)
+    const _ = (window.SoVaDesk && window.SoVaDesk.translations)
         ? (key) => {
             const keys = key.split('.');
-            let val = window.BetterDesk.translations;
+            let val = window.SoVaDesk.translations;
             for (const k of keys) {
                 if (val && typeof val === 'object') val = val[k];
                 else return key;
@@ -18,7 +18,7 @@
         }
         : (key) => key;
 
-    const csrfToken = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+    const csrfToken = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
 
     // ── Permission categories ──────────────────────────────────────────
 

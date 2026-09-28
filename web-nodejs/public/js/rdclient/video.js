@@ -547,7 +547,7 @@ class RDVideo {
 
             // Periodic diagnostics (every 5 seconds, debug only)
             const now = performance.now();
-            if (typeof window !== 'undefined' && window.BetterDesk && window.BetterDesk.debugRelay === true) {
+            if (typeof window !== 'undefined' && window.SoVaDesk && window.SoVaDesk.debugRelay === true) {
                 if (!this._lastDiagTime || now - this._lastDiagTime > 5000) {
                     this._lastDiagTime = now;
                     let bufInfo = 'none';

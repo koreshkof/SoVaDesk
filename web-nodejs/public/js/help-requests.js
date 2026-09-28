@@ -24,7 +24,7 @@
     const statAccepted = document.getElementById('stat-accepted');
     const statResolved = document.getElementById('stat-resolved');
 
-    const csrfToken = window.BetterDesk?.csrfToken || '';
+    const csrfToken = window.SoVaDesk?.csrfToken || '';
 
     // ---- Helpers ----
 

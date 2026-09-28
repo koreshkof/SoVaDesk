@@ -140,7 +140,7 @@
     }
 
     function init() {
-        if (window.BetterDesk && window.BetterDesk.embed) return;
+        if (window.SoVaDesk && window.SoVaDesk.embed) return;
 
         buildDrawerFromSidebar();
 

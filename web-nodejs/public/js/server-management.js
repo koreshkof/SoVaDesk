@@ -14,7 +14,7 @@
     }
 
     function getCsrfToken() {
-        return (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        return (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
     }
 
     async function api(path, options = {}) {

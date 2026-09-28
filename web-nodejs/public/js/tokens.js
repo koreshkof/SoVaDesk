@@ -5,13 +5,13 @@
 (function () {
     'use strict';
 
-    const _ = window.BetterDesk?.translations
-        ? (key) => key.split('.').reduce((o, k) => (o && o[k]) || key, window.BetterDesk.translations)
+    const _ = window.SoVaDesk?.translations
+        ? (key) => key.split('.').reduce((o, k) => (o && o[k]) || key, window.SoVaDesk.translations)
         : (key) => key;
 
     let allTokens = [];
     let currentFilter = 'all';
-    const csrfToken = window.BetterDesk?.csrfToken || '';
+    const csrfToken = window.SoVaDesk?.csrfToken || '';
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@
     }
 
     function showToast(message, type) {
-        if (window.BetterDesk?.notify) { window.BetterDesk.notify(message, type); return; }
+        if (window.SoVaDesk?.notify) { window.SoVaDesk.notify(message, type); return; }
         const container = document.getElementById('toast-container');
         if (!container) return;
         const toast = document.createElement('div');

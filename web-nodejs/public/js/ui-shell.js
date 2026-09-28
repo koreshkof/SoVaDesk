@@ -23,13 +23,13 @@
     }
 
     function init() {
-        if (window.BetterDesk && window.BetterDesk.embed) return;
+        if (window.SoVaDesk && window.SoVaDesk.embed) return;
         document.querySelectorAll('[data-ui-shell-switch]').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 var target = btn.getAttribute('data-ui-shell-switch');
                 if (!target) {
-                    var current = (window.BetterDesk && window.BetterDesk.uiShell) || 'classic';
+                    var current = (window.SoVaDesk && window.SoVaDesk.uiShell) || 'classic';
                     target = current === 'ux35' ? 'classic' : 'ux35';
                 }
                 switchTo(target);
@@ -40,7 +40,7 @@
     window.UiShell = {
         switchTo: switchTo,
         current: function () {
-            return (window.BetterDesk && window.BetterDesk.uiShell) || 'classic';
+            return (window.SoVaDesk && window.SoVaDesk.uiShell) || 'classic';
         }
     };
 

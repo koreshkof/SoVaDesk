@@ -204,7 +204,7 @@
         else greetingKey = 'dashboard.greeting_evening';
         
         // Get username from global config
-        const username = window.BetterDesk?.user?.username || 'Admin';
+        const username = window.SoVaDesk?.user?.username || 'Admin';
         
         const greeting = _(greetingKey);
         el.textContent = greeting.replace('{name}', username);
@@ -778,8 +778,8 @@ Start-Process -FilePath $RustDesk -ArgumentList @('--config', $CfgString) -Wait 
         return d.innerHTML;
     }
 
-    window.BetterDeskPanelMounts = window.BetterDeskPanelMounts || {};
-    window.BetterDeskPanelMounts.dashboard = {
+    window.SoVaDeskPanelMounts = window.SoVaDeskPanelMounts || {};
+    window.SoVaDeskPanelMounts.dashboard = {
         mount: init,
         destroy: destroy,
         refresh: loadOverview

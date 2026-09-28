@@ -114,7 +114,7 @@
 
     function getApps() {
         var t = typeof _ === 'function' ? _ : function(k) { return k; };
-        var role = window.BetterDesk && window.BetterDesk.user && window.BetterDesk.user.role;
+        var role = window.SoVaDesk && window.SoVaDesk.user && window.SoVaDesk.user.role;
         var isAdmin = role === 'admin'
             || role === 'super_admin'
             || role === 'server_admin'
@@ -159,7 +159,7 @@
     // ============ Initialization ============
 
     function init() {
-        if (window.BetterDesk && window.BetterDesk.embed) return;
+        if (window.SoVaDesk && window.SoVaDesk.embed) return;
         
         // Initialize foldable device detection
         initFoldableDetection();
@@ -2078,8 +2078,8 @@
 
         var helpBtn = document.getElementById('topbar-help-btn');
         if (helpBtn) helpBtn.addEventListener('click', function() {
-            if (window.BetterDeskTutorial && typeof window.BetterDeskTutorial.toggleHelpMenu === 'function') {
-                window.BetterDeskTutorial.toggleHelpMenu();
+            if (window.SoVaDeskTutorial && typeof window.SoVaDeskTutorial.toggleHelpMenu === 'function') {
+                window.SoVaDeskTutorial.toggleHelpMenu();
             } else if (window.Tutorial && typeof window.Tutorial.toggleHelpMenu === 'function') {
                 window.Tutorial.toggleHelpMenu();
             }

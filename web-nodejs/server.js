@@ -812,7 +812,7 @@ function printStartupBanner(protocol, port) {
     console.log('');
     console.log('  ╔══════════════════════════════════════════════════╗');
     console.log('  ║                                                  ║');
-    console.log('  ║   🖥️  BetterDesk Console v' + config.appVersion.padEnd(23) + '  ║');
+    console.log('  ║   🖥️  SoVa Desk Console v' + config.appVersion.padEnd(23) + '  ║');
     console.log('  ║                                                  ║');
     console.log('  ╠══════════════════════════════════════════════════╣');
     console.log('  ║                                                  ║');

@@ -312,7 +312,7 @@ function sanitizeCustomCss(value) {
 // Default branding (BetterDesk original theme)
 const DEFAULT_BRANDING = {
     // Brand identity
-    appName: 'BetterDesk',
+    appName: 'SoVa Desk',
     appDescription: 'BetterDesk Server Management',
     
     // Logo configuration
@@ -1154,7 +1154,7 @@ function getPublicAppearance() {
         revision: getBrandingRevision(),
         product: 'betterdesk-appearance',
         identity: {
-            appName: appearance.identity.appName || 'BetterDesk',
+            appName: appearance.identity.appName || 'SoVa Desk',
             appDescription: appearance.identity.appDescription || '',
             logoType: appearance.identity.logoType || 'icon',
             logoIcon: appearance.identity.logoIcon || 'dns',

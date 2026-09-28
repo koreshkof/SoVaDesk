@@ -2054,8 +2054,8 @@
         });
     }
 
-    window.BetterDeskDevices = window.BetterDeskDevices || {};
-    window.BetterDeskDevices.showEditModal = showEditModal;
+    window.SoVaDeskDevices = window.SoVaDeskDevices || {};
+    window.SoVaDeskDevices.showEditModal = showEditModal;
     
     /**
      * Render pagination

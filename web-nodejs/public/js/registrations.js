@@ -5,16 +5,16 @@
 (function () {
     'use strict';
 
-    const _ = window.BetterDesk?.translations
+    const _ = window.SoVaDesk?.translations
         ? (key) => {
             const keys = key.split('.');
-            let val = window.BetterDesk.translations;
+            let val = window.SoVaDesk.translations;
             for (const k of keys) { val = val?.[k]; }
             return val || key;
         }
         : (key) => key;
 
-    const csrfToken = window.BetterDesk?.csrfToken || '';
+    const csrfToken = window.SoVaDesk?.csrfToken || '';
 
     // State
     let currentStatus = '';
@@ -549,8 +549,8 @@
 
     function showToast(message, type) {
         // Use BetterDesk notification system if available
-        if (window.BetterDesk?.notify) {
-            window.BetterDesk.notify(message, type);
+        if (window.SoVaDesk?.notify) {
+            window.SoVaDesk.notify(message, type);
             return;
         }
         // Fallback: use toast container

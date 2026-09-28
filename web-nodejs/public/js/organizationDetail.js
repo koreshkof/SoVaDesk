@@ -22,7 +22,7 @@
     //  Helpers
     // -----------------------------------------------------------------------
     async function api(method, path, body) {
-        const csrfToken = window.BetterDesk?.csrfToken || '';
+        const csrfToken = window.SoVaDesk?.csrfToken || '';
         const opts = {
             method,
             headers: { 'Content-Type': 'application/json' },
@@ -973,7 +973,7 @@
                                     return;
                                 }
                                 try {
-                                    const csrfToken = window.BetterDesk?.csrfToken || '';
+                                    const csrfToken = window.SoVaDesk?.csrfToken || '';
                                     const res = await fetch('/api/device-groups', {
                                         method: 'POST',
                                         headers: {

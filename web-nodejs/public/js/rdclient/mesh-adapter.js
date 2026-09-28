@@ -74,7 +74,7 @@
         if (pageQs.get('record') === '1' || this.opts.serverRecord) {
             tunnelQs.set('record', '1');
         }
-        const csrf = (window.BetterDesk && window.BetterDesk.csrfToken) || '';
+        const csrf = (window.SoVaDesk && window.SoVaDesk.csrfToken) || '';
         const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
         if (csrf) headers['X-CSRF-Token'] = csrf;
         const resp = await fetch(`/api/mesh/devices/${encodeURIComponent(this._deviceId)}/desktop?${tunnelQs.toString()}`, {
