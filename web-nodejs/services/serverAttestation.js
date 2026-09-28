@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * BetterDesk Console — Server Attestation (performance benchmark)
+ * SoVa Desk Console — Server Attestation (performance benchmark)
  *
  * Runs a load test against the Go signal/relay WebSocket endpoints and
  * measures host CPU/RAM/disk until the 80% threshold is reached.

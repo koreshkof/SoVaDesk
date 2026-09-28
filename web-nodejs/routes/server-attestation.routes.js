@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * BetterDesk Console — Server Attestation Routes
+ * SoVa Desk Console — Server Attestation Routes
  */
 
 const express = require('express');
