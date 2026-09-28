@@ -35,7 +35,7 @@ function setGuestCookie(res, token, expiresAt) {
     }
     res.cookie(GUEST_COOKIE, token, {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         secure: !!config.httpsEnabled,
         path: '/',
         maxAge,
@@ -45,7 +45,7 @@ function setGuestCookie(res, token, expiresAt) {
 function clearGuestCookie(res) {
     res.clearCookie(GUEST_COOKIE, {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         secure: !!config.httpsEnabled,
         path: '/',
     });

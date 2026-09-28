@@ -65,7 +65,7 @@ function i18nMiddleware(req, res, next) {
         res.cookie('betterdesk_lang', req.query.lang, {
             maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
             httpOnly: false,
-            sameSite: 'lax'
+            sameSite: 'none'
         });
     }
     

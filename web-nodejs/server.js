@@ -122,7 +122,7 @@ const sessionMiddleware = session({
     cookie: {
         secure: config.httpsEnabled,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: config.sessionMaxAge
     }
 });
@@ -195,7 +195,7 @@ app.use((req, res, next) => {
         uiShell = q;
         res.cookie(UI_SHELL_COOKIE, uiShell, {
             maxAge: 365 * 24 * 60 * 60 * 1000,
-            sameSite: 'lax',
+            sameSite: 'none',
             httpOnly: false,
             path: '/'
         });

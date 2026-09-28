@@ -26,7 +26,7 @@ const {
     cookieName: CSRF_COOKIE,
     cookieOptions: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         get secure() { return csrfCookieSecure; },
         path: '/'
     },
@@ -71,7 +71,7 @@ function csrfTokenProvider(req, res, next) {
         if (req.cookies) delete req.cookies[CSRF_COOKIE];
         res.clearCookie(CSRF_COOKIE, {
             httpOnly: true,
-            sameSite: 'lax',
+            sameSite: 'none',
             secure: csrfCookieSecure,
             path: '/'
         });
@@ -99,7 +99,7 @@ function safeCsrfProtection(req, res, next) {
             // clearCookie must use identical options for the browser to match.
             res.clearCookie(CSRF_COOKIE, {
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: 'none',
                 secure: csrfCookieSecure,
                 path: '/'
             });
