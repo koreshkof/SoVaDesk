@@ -1011,7 +1011,8 @@ function sanitizeGoServerServiceConfig() {
                 }).toString();
                 const cleanEnv = envRaw
                     .replace(/HBBS_API_URL=https:\/\/localhost/g, 'HBBS_API_URL=http://localhost')
-                    .replace(/BETTERDESK_API_URL=https:\/\/localhost/g, 'BETTERDESK_API_URL=http://localhost');
+                    .replace(/BETTERDESK_API_URL=https:\/\/localhost/g, 'BETTERDESK_API_URL=http://localhost')
+                    .replace(/SOVA_API_URL=https:\/\/localhost/g, 'SOVA_API_URL=http://localhost');
                 if (cleanEnv !== envRaw) {
                     execFileSync('nssm', ['set', consoleService, 'AppEnvironmentExtra', cleanEnv], {
                         timeout: 5000,
@@ -1036,7 +1037,8 @@ function sanitizeGoServerServiceConfig() {
         const original = readTextFilePrivileged(fragmentPath);
         let clean = stripIncompatibleGoApiTLSArgs(original)
             .replace(/Environment=HBBS_API_URL=https:\/\/localhost/g, 'Environment=HBBS_API_URL=http://localhost')
-            .replace(/Environment=BETTERDESK_API_URL=https:\/\/localhost/g, 'Environment=BETTERDESK_API_URL=http://localhost');
+            .replace(/Environment=BETTERDESK_API_URL=https:\/\/localhost/g, 'Environment=BETTERDESK_API_URL=http://localhost')
+            .replace(/Environment=SOVA_API_URL=https:\/\/localhost/g, 'Environment=SOVA_API_URL=http://localhost');
 
         if (!/^Environment=MESH_ENABLED=/m.test(clean)) {
             const meshLine = 'Environment=MESH_ENABLED=Y';

@@ -808,7 +808,7 @@ function printStartupBanner(protocol, port) {
     const apiProtocol = shouldUseRustDeskApiTls(apiHasCerts ? {} : null) ? 'HTTPS' : 'HTTP';
     const apiStatus = config.apiEnabled ? `✅ Port ${config.apiPort} (${apiProtocol})` : '❌ Disabled';
     const panelUrl = `${protocol}://${config.host}:${port}`;
-    const goApiUrl = redactUrlForLog(config.betterdeskApiUrl || process.env.BETTERDESK_API_URL || 'http://localhost:21114/api');
+    const goApiUrl = redactUrlForLog(config.betterdeskApiUrl || process.env.SOVA_API_URL || process.env.BETTERDESK_API_URL || 'http://localhost:21114/api');
     console.log('');
     console.log('  ╔══════════════════════════════════════════════════╗');
     console.log('  ║                                                  ║');

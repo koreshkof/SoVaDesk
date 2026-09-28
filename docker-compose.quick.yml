@@ -108,6 +108,7 @@ services:
       - API_HOST=0.0.0.0
       - API_ENABLED=false
       - SERVER_BACKEND=betterdesk
+      - SOVA_API_URL=http://betterdesk-server:21114/api
       - BETTERDESK_API_URL=http://betterdesk-server:21114/api
       - RUSTDESK_PATH=/opt/rustdesk
       - DATA_DIR=/app/data

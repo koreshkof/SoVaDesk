@@ -88,6 +88,7 @@ services:
       - API_ENABLED=false
       - SERVER_BACKEND=betterdesk
       # 127.0.0.1 — Docker DNS hostnames are unavailable in service: network mode.
+      - SOVA_API_URL=http://127.0.0.1:21114/api
       - BETTERDESK_API_URL=http://127.0.0.1:21114/api
       - RUSTDESK_PATH=/opt/rustdesk
       - DATA_DIR=/app/data

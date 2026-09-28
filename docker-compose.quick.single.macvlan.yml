@@ -47,6 +47,7 @@ services:
       - ENCRYPTED_ONLY=1
       - SERVER_BACKEND=betterdesk
       - HBBS_API_URL=http://127.0.0.1:21121/api
+      - SOVA_API_URL=http://127.0.0.1:21121/api
       - BETTERDESK_API_URL=http://127.0.0.1:21121/api
       - RUSTDESK_PATH=/opt/rustdesk
       - DATA_DIR=/app/data

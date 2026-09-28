@@ -1265,6 +1265,7 @@ apply_console_protocol_mode() {
         _upsert_env_line "$env_file" HTTP_REDIRECT_HTTPS false
         _upsert_env_line "$env_file" TRUST_PROXY false
         _upsert_env_line "$env_file" HBBS_API_URL "http://localhost:${go_port}/api"
+        _upsert_env_line "$env_file" SOVA_API_URL "http://localhost:${go_port}/api"
         _upsert_env_line "$env_file" BETTERDESK_API_URL "http://localhost:${go_port}/api"
         _remove_env_line "$env_file" NODE_EXTRA_CA_CERTS
         _remove_env_line "$env_file" ENTERPRISE_TLS
@@ -1277,6 +1278,7 @@ apply_console_protocol_mode() {
             _upsert_systemd_env "$svc_file" TRUST_PROXY false
             sed -i "s|Environment=HBBS_API_URL=https://localhost|Environment=HBBS_API_URL=http://localhost|" "$svc_file"
             sed -i "s|Environment=BETTERDESK_API_URL=https://localhost|Environment=BETTERDESK_API_URL=http://localhost|" "$svc_file"
+            sed -i "s|Environment=SOVA_API_URL=https://localhost|Environment=SOVA_API_URL=http://localhost|" "$svc_file"
             _remove_systemd_env "$svc_file" NODE_EXTRA_CA_CERTS
             _remove_systemd_env "$svc_file" ENTERPRISE_TLS
         fi
@@ -1293,6 +1295,7 @@ apply_console_protocol_mode() {
         _upsert_env_line "$env_file" RUSTDESK_API_TLS "$api_tls"
         _upsert_env_line "$env_file" ALLOW_SELF_SIGNED_CERTS "$allow_self_signed"
         _upsert_env_line "$env_file" HBBS_API_URL "http://localhost:${go_port}/api"
+        _upsert_env_line "$env_file" SOVA_API_URL "http://localhost:${go_port}/api"
         _upsert_env_line "$env_file" BETTERDESK_API_URL "http://localhost:${go_port}/api"
         if [ "$allow_self_signed" = "true" ]; then
             _upsert_env_line "$env_file" NODE_EXTRA_CA_CERTS "$cert_crt"
@@ -1310,6 +1313,7 @@ apply_console_protocol_mode() {
             _upsert_systemd_env "$svc_file" TRUST_PROXY false
             sed -i "s|Environment=HBBS_API_URL=https://localhost|Environment=HBBS_API_URL=http://localhost|" "$svc_file"
             sed -i "s|Environment=BETTERDESK_API_URL=https://localhost|Environment=BETTERDESK_API_URL=http://localhost|" "$svc_file"
+            sed -i "s|Environment=SOVA_API_URL=https://localhost|Environment=SOVA_API_URL=http://localhost|" "$svc_file"
             if [ "$allow_self_signed" = "true" ]; then
                 _upsert_systemd_env "$svc_file" NODE_EXTRA_CA_CERTS "$cert_crt"
             else
@@ -1410,7 +1414,8 @@ apply_console_reverse_proxy_mode() {
     fi
     _upsert_env_line "$env_file" HTTP_REDIRECT_HTTPS false
     _upsert_env_line "$env_file" HBBS_API_URL "http://localhost:${go_port}/api"
-    _upsert_env_line "$env_file" BETTERDESK_API_URL "http://localhost:${go_port}/api"
+    _upsert_env_line "$env_file" SOVA_API_URL "http://localhost:${go_port}/api"
+        _upsert_env_line "$env_file" BETTERDESK_API_URL "http://localhost:${go_port}/api"
 
     if [ -n "$panel_host" ]; then
         _upsert_env_line "$env_file" PANEL_PUBLIC_HOST "$panel_host"
@@ -3437,6 +3442,7 @@ generate_ssl_certificates() {
                 fi
                 sed -i "s|^HBBS_API_URL=https://localhost|HBBS_API_URL=http://localhost|" "$env_file"
                 sed -i "s|^BETTERDESK_API_URL=https://localhost|BETTERDESK_API_URL=http://localhost|" "$env_file"
+                sed -i "s|^SOVA_API_URL=https://localhost|SOVA_API_URL=http://localhost|" "$env_file"
                 print_info "Enterprise TLS: Go API stays HTTP for RustDesk client compatibility"
             fi
         fi
@@ -3484,6 +3490,7 @@ ensure_api_compat_proxy_layout() {
         echo "GO_API_PORT=$go_port" >> "$env_file"
     fi
     sed -i "s|^HBBS_API_URL=.*|HBBS_API_URL=http://localhost:${go_port}/api|" "$env_file"
+    sed -i "s|^SOVA_API_URL=.*|SOVA_API_URL=http://localhost:${go_port}/api|" "$env_file"
     sed -i "s|^BETTERDESK_API_URL=.*|BETTERDESK_API_URL=http://localhost:${go_port}/api|" "$env_file"
 }
 
@@ -3911,6 +3918,7 @@ Environment=KEYS_PATH=$RUSTDESK_PATH
 Environment=DATA_DIR=$CONSOLE_PATH/data
 $db_env
 Environment=HBBS_API_URL=$api_scheme://localhost:${GO_API_PORT:-21114}/api
+Environment=SOVA_API_URL=$api_scheme://localhost:${GO_API_PORT:-21114}/api
 Environment=BETTERDESK_API_URL=$api_scheme://localhost:${GO_API_PORT:-21114}/api
 Environment=SERVER_BACKEND=sova
 Environment=API_ENABLED=true
@@ -6348,10 +6356,12 @@ do_diagnostics() {
         local console_api_url=""
         # Check what URL the console is configured to use
         if [ -f /etc/systemd/system/sova-console.service ]; then
-            console_api_url=$(grep 'BETTERDESK_API_URL=' /etc/systemd/system/sova-console.service 2>/dev/null | tail -1 | sed 's/.*BETTERDESK_API_URL=//')
+            console_api_url=$(grep 'SOVA_API_URL=' /etc/systemd/system/sova-console.service 2>/dev/null | tail -1 | sed 's/.*SOVA_API_URL=//')
+            [ -z "$console_api_url" ] && console_api_url=$(grep 'BETTERDESK_API_URL=' /etc/systemd/system/sova-console.service 2>/dev/null | tail -1 | sed 's/.*BETTERDESK_API_URL=//')
         fi
         if [ -z "$console_api_url" ] && [ -f "$CONSOLE_PATH/.env" ]; then
-            console_api_url=$(grep -m1 '^BETTERDESK_API_URL=' "$CONSOLE_PATH/.env" 2>/dev/null | cut -d= -f2-)
+            console_api_url=$(grep -m1 '^SOVA_API_URL=' "$CONSOLE_PATH/.env" 2>/dev/null | cut -d= -f2-)
+            [ -z "$console_api_url" ] && console_api_url=$(grep -m1 '^BETTERDESK_API_URL=' "$CONSOLE_PATH/.env" 2>/dev/null | cut -d= -f2-)
         fi
         
         if [ -n "$console_api_url" ] && echo "$console_api_url" | grep -q '^http://'; then

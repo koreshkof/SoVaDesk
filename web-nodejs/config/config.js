@@ -122,7 +122,7 @@ function parseApiUrlPort(urlString, fallback) {
     }
 }
 
-const _betterdeskApiUrlRaw = process.env.BETTERDESK_API_URL || process.env.HBBS_API_URL
+const _betterdeskApiUrlRaw = process.env.SOVA_API_URL || process.env.BETTERDESK_API_URL || process.env.HBBS_API_URL
     || `http://127.0.0.1:${GO_API_PORT_DEFAULT}/api`;
 const goApiPort = parseInt(process.env.GO_API_PORT, 10)
     || parseApiUrlPort(_betterdeskApiUrlRaw, GO_API_PORT_DEFAULT);

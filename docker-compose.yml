@@ -100,6 +100,7 @@ services:
       - GO_API_PORT=21114
       - SERVER_BACKEND=sova
       - HBBS_API_URL=http://sova-server:21114/api
+      - SOVA_API_URL=http://sova-server:21114/api
       - BETTERDESK_API_URL=http://sova-server:21114/api
       - RUSTDESK_PATH=/opt/rustdesk
       - DATA_DIR=/app/data

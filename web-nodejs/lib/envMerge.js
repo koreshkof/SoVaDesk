@@ -106,6 +106,7 @@ function buildEnvSubstitutions(opts = {}) {
         DATA_DIR: pick('DATA_DIR', config.dataDir, ''),
         GO_API_PORT: String(goPort),
         HBBS_API_URL: pick('HBBS_API_URL', goApiBase),
+        SOVA_API_URL: pick('SOVA_API_URL', goApiBase),
         BETTERDESK_API_URL: pick('BETTERDESK_API_URL', goApiBase),
         API_PORT: String(apiPort),
         DEFAULT_ADMIN_PASSWORD: pick('DEFAULT_ADMIN_PASSWORD', ''),
